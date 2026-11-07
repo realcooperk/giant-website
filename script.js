@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Update these two values to match your bot's current reach.
 const giantStats = {
   servers: 10,
@@ -77,8 +76,14 @@ if (
       const artBounds = heroArt.getBoundingClientRect();
       const x = (pointerEvent.clientX - heroBounds.left) / heroBounds.width;
       const y = (pointerEvent.clientY - heroBounds.top) / heroBounds.height;
-      const normalizedX = Math.max(-1, Math.min(1, (pointerEvent.clientX - artBounds.left) / artBounds.width * 2 - 1));
-      const normalizedY = Math.max(-1, Math.min(1, (pointerEvent.clientY - artBounds.top) / artBounds.height * 2 - 1));
+      const normalizedX = Math.max(
+        -1,
+        Math.min(1, ((pointerEvent.clientX - artBounds.left) / artBounds.width) * 2 - 1),
+      );
+      const normalizedY = Math.max(
+        -1,
+        Math.min(1, ((pointerEvent.clientY - artBounds.top) / artBounds.height) * 2 - 1),
+      );
 
       hero.style.setProperty("--pointer-x", `${x * 100}%`);
       hero.style.setProperty("--pointer-y", `${y * 100}%`);
@@ -104,17 +109,3 @@ if (
     });
   });
 }
-=======
-// Update these two values to match your bot's current reach.
-const giantStats = {
-  servers: 10,
-  users: 1500,
-};
-
-const numberFormatter = new Intl.NumberFormat("en-US");
-
-document.getElementById("server-count").textContent =
-  `${numberFormatter.format(giantStats.servers)}+`;
-document.getElementById("user-count").textContent =
-  `${numberFormatter.format(giantStats.users)}+`;
->>>>>>> a656725e7a4829cc3249c03fab73ef7db5df777b
