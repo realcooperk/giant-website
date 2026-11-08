@@ -6,6 +6,17 @@ const giantStats = {
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
+const authorizationUrl = new URL(window.location.href);
+if (authorizationUrl.searchParams.has("code")) {
+  authorizationUrl.searchParams.delete("code");
+  window.history.replaceState(
+    null,
+    "",
+    `${authorizationUrl.pathname}${authorizationUrl.search}${authorizationUrl.hash}`,
+  );
+  window.location.replace("/dashboard/");
+}
+
 document.getElementById("server-count").textContent =
   `${numberFormatter.format(giantStats.servers)}+`;
 document.getElementById("user-count").textContent =

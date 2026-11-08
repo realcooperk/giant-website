@@ -70,6 +70,12 @@ a {
   border-bottom: 1px solid rgba(255, 255, 255, 0.055);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -140,6 +146,16 @@ a {
 .button-outline:hover {
   border-color: rgba(255, 255, 255, 0.36);
   background: rgba(255, 255, 255, 0.07);
+}
+
+.header-login {
+  border-color: rgba(129, 116, 255, 0.45);
+  background: rgba(129, 116, 255, 0.12);
+}
+
+.header-login:hover {
+  border-color: rgba(129, 116, 255, 0.8);
+  background: rgba(129, 116, 255, 0.2);
 }
 
 .button-primary {
@@ -729,6 +745,20 @@ h2 span {
   font-size: 10px;
 }
 
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-links a {
+  transition: color 160ms ease;
+}
+
+.footer-links a:hover {
+  color: white;
+}
+
 .site-footer .brand {
   color: var(--text);
   font-size: 18px;
@@ -741,6 +771,71 @@ h2 span {
 
 .site-footer a:last-child span {
   margin-left: 5px;
+}
+
+.document-main {
+  width: min(820px, calc(100% - 48px));
+  min-height: calc(100vh - 174px);
+  margin: 0 auto;
+  padding: 88px 0;
+}
+
+.document-kicker {
+  margin-bottom: 13px;
+  color: #aaa5fa;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.65px;
+}
+
+.document-main h1 {
+  margin-bottom: 16px;
+  font-size: clamp(42px, 7vw, 64px);
+  letter-spacing: -3px;
+}
+
+.document-intro,
+.document-main p,
+.document-main li {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.document-intro {
+  max-width: 650px;
+  margin-bottom: 42px;
+}
+
+.document-main h2 {
+  margin: 32px 0 10px;
+  font-size: 21px;
+  letter-spacing: -0.5px;
+}
+
+.document-main ul {
+  padding-left: 22px;
+}
+
+.document-main li + li {
+  margin-top: 7px;
+}
+
+.dashboard-panel {
+  padding: 42px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse at 90% 0%, rgba(109, 94, 203, 0.12), transparent 48%),
+    var(--surface);
+}
+
+.dashboard-panel h1 {
+  font-size: clamp(42px, 7vw, 64px);
+}
+
+.dashboard-panel .button {
+  margin-top: 10px;
 }
 
 .motion-ready .reveal {
@@ -830,6 +925,10 @@ h2 span {
   }
 
   .header-cta {
+    display: none;
+  }
+
+  .header-login {
     min-height: 36px;
     padding-inline: 10px;
     font-size: 10px;
@@ -961,6 +1060,24 @@ h2 span {
 
   .site-footer > span {
     display: none;
+  }
+
+  .footer-links {
+    gap: 12px;
+  }
+
+  .document-main {
+    min-height: calc(100vh - 148px);
+    padding: 62px 0;
+  }
+
+  .document-main p,
+  .document-main li {
+    font-size: 13px;
+  }
+
+  .dashboard-panel {
+    padding: 28px 22px;
   }
 }
 

@@ -30,14 +30,22 @@
         <a href="#about">About</a>
         <a href="https://discord.gg/XWB8qCPXVJ" target="_blank" rel="noopener noreferrer">Support</a>
       </nav>
-      <a
-        class="button button-small button-outline header-cta"
-        href="https://discord.com/oauth2/authorize?client_id=1385271103030689863&permissions=8&integration_type=0&scope=bot"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Add to Discord <span aria-hidden="true">↗</span>
-      </a>
+      <div class="header-actions">
+        <a
+          class="button button-small button-outline header-login"
+          href="https://discord.com/oauth2/authorize?client_id=1385271103030689863&response_type=code&redirect_uri=https%3A%2F%2Fgiant-bot.xyz%2Fdashboard&scope=identify+guilds+email"
+        >
+          Log in with Discord <span aria-hidden="true">↗</span>
+        </a>
+        <a
+          class="button button-small button-outline header-cta"
+          href="https://discord.com/oauth2/authorize?client_id=1385271103030689863&permissions=8&integration_type=0&scope=bot"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Add to Discord <span aria-hidden="true">↗</span>
+        </a>
+      </div>
     </header>
 
     <main>
@@ -177,9 +185,13 @@
         <span>giant<span class="brand-period">.</span></span>
       </a>
       <span>Big help for your little corner of Discord.</span>
-      <a href="https://discord.gg/XWB8qCPXVJ" target="_blank" rel="noopener noreferrer">
-        Need a hand? Join support <span aria-hidden="true">↗</span>
-      </a>
+      <nav class="footer-links" aria-label="Legal and support links">
+        <a href="/tos/">Terms of Use</a>
+        <a href="/privacy/">Privacy Policy</a>
+        <a href="https://discord.gg/XWB8qCPXVJ" target="_blank" rel="noopener noreferrer">
+          Support <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
     </footer>
     <script src="script.js"></script>
   </body>
