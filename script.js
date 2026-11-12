@@ -1,7 +1,7 @@
 // Update these two values to match your bot's current reach.
 const giantStats = {
   servers: 10,
-  users: 50,
+  users: 100,
 };
 
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -53,7 +53,7 @@ if (scrollProgress) {
 
 if (!reducedMotion && "IntersectionObserver" in window) {
   const revealItems = document.querySelectorAll(
-    ".stats-bar, .section-heading, .feature-card, .cta-section",
+    ".stats-bar, .section-heading, .feature-card, .directory-section, .cta-section",
   );
   const revealObserver = new IntersectionObserver(
     (entries, observer) => {

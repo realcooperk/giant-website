@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Meet Giant, the all-in-one Discord moderation bot. Keep your community safe, organized, and growing."
+      content="Meet Giant, the all-in-one Discord moderation bot. Keep your community safe and discover Discord servers in the Giant directory."
     />
     <meta name="theme-color" content="#090a12" />
-    <title>Giant</title>
+    <title>Giant — Discord bot and server directory</title>
     <link rel="icon" type="image/png" href="giant-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,6 +27,7 @@
       </a>
       <nav class="main-nav" aria-label="Main navigation">
         <a href="#features">Features</a>
+        <a href="#server-directory">Servers</a>
         <a href="#about">About</a>
         <a href="https://discord.gg/ZEXC7MfEV8" target="_blank" rel="noopener noreferrer">Support</a>
       </nav>
@@ -35,7 +36,7 @@
           class="button button-small button-outline header-login"
           href="https://discord.com/oauth2/authorize?client_id=1385271103030689863&response_type=code&redirect_uri=https%3A%2F%2Fgiant-bot.xyz%2Fdashboard&scope=identify+guilds+email"
         >
-          Log in with Discord <span aria-hidden="true">↗</span>
+          Log in with Discord
         </a>
         <a
           class="button button-small button-outline header-cta"
@@ -43,7 +44,7 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          Add to Discord <span aria-hidden="true">↗</span>
+          Add to Discord
         </a>
       </div>
     </header>
@@ -65,7 +66,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Invite Giant <span aria-hidden="true">↗</span>
+              Invite Giant
             </a>
             <a
               class="button button-quiet"
@@ -73,13 +74,10 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Join the support server <span aria-hidden="true">→</span>
+              Join the support server
             </a>
           </div>
           <div class="community-proof">
-            <div class="proof-avatars" aria-hidden="true">
-              <span>G</span><span>✦</span><span>✳</span>
-            </div>
             <p>Made for communities that are <strong>going places.</strong></p>
           </div>
         </div>
@@ -91,17 +89,17 @@
             <img src="giant-logo.png" alt="Giant bot logo" />
           </div>
           <div class="floating-card card-automod">
-            <span class="card-icon icon-shield" aria-hidden="true">✓</span>
+            <span class="card-icon icon-shield" aria-hidden="true"></span>
             <span><strong>AutoMod</strong><small>Keeping things in check</small></span>
             <span class="toggle" aria-label="Enabled"><span></span></span>
           </div>
           <div class="floating-card card-action">
-            <span class="card-icon icon-bolt" aria-hidden="true">✦</span>
+            <span class="card-icon icon-bolt" aria-hidden="true"></span>
             <span><strong>Quick action</strong><small>Problem handled.</small></span>
-            <span class="action-check" aria-hidden="true">✓</span>
+            <span class="action-check" aria-hidden="true"></span>
           </div>
-          <span class="sparkle sparkle-one" aria-hidden="true">✳</span>
-          <span class="sparkle sparkle-two" aria-hidden="true">✦</span>
+          <span class="sparkle sparkle-one" aria-hidden="true"></span>
+          <span class="sparkle sparkle-two" aria-hidden="true"></span>
         </div>
       </section>
 
@@ -162,6 +160,58 @@
         </div>
       </section>
 
+      <section class="directory-section section-wrap" id="server-directory">
+        <div class="directory-heading">
+          <div>
+            <div class="eyebrow">FIND YOUR PEOPLE</div>
+            <h2>Discover a <span>community.</span></h2>
+          </div>
+          <p>Browse Discord communities or share yours with everyone.</p>
+        </div>
+
+        <div class="directory-layout">
+          <div class="directory-browser">
+            <label class="directory-search">
+              <span class="sr-only">Search communities</span>
+              <input id="server-search" type="search" placeholder="Search communities..." autocomplete="off" />
+              <span id="server-result-count" class="directory-result-count" aria-live="polite"></span>
+            </label>
+            <p id="directory-status" class="directory-status" role="status" aria-live="polite">
+              Loading communities...
+            </p>
+            <div id="server-results" class="server-results" aria-live="polite"></div>
+          </div>
+
+          <form id="server-submit-form" class="server-submit-form">
+            <div class="form-heading">
+              <span class="feature-tag">GROW YOUR COMMUNITY</span>
+              <h3>List your server</h3>
+              <p>Share a title, description, and invite link. Listings appear after review.</p>
+            </div>
+            <label>
+              Listing title
+              <input name="title" type="text" minlength="3" maxlength="80" required placeholder="Your community name" />
+            </label>
+            <label>
+              Description
+              <textarea name="description" rows="4" minlength="20" maxlength="1000" required placeholder="What can people find in your server?"></textarea>
+            </label>
+            <label>
+              Discord invite link
+              <input name="invite" type="url" required placeholder="https://discord.gg/your-invite" />
+            </label>
+            <button class="button button-outline preview-invite-button" id="preview-server" type="button">
+              Preview server
+            </button>
+            <div id="invite-preview" class="invite-preview" hidden></div>
+            <button class="button button-primary submit-listing-button" type="submit">Submit for review</button>
+            <p id="form-status" class="form-status" role="status" aria-live="polite">
+              Listings are reviewed before they appear in search.
+            </p>
+          </form>
+        </div>
+      </section>
+
       <section class="cta-section">
         <div class="cta-glow" aria-hidden="true"></div>
         <img src="giant-logo.png" alt="" />
@@ -174,7 +224,7 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          Add Giant to your server <span aria-hidden="true">↗</span>
+          Add Giant to your server
         </a>
       </section>
     </main>
@@ -189,10 +239,12 @@
         <a href="/tos/">Terms of Use</a>
         <a href="/privacy/">Privacy Policy</a>
         <a href="https://discord.gg/ZEXC7MfEV8" target="_blank" rel="noopener noreferrer">
-          Support <span aria-hidden="true">↗</span>
+          Support
         </a>
       </nav>
     </footer>
     <script src="script.js"></script>
+    <script src="directory-config.js"></script>
+    <script src="server-directory.js"></script>
   </body>
 </html>
