@@ -48,6 +48,17 @@
       }
     : null;
   const numberFormatter = new Intl.NumberFormat("en-US");
+  const officialListing = {
+    title: "Giant Official",
+    guild_name: "Giant Support Community",
+    description: "The official community for Giant bot support, updates, and announcements.",
+    invite_code: "ZEXC7MfEV8",
+    guild_id: "",
+    guild_icon_hash: "",
+    guild_banner_hash: "",
+    approximate_member_count: null,
+    is_official: true,
+  };
   let listings = [];
   let invitePreview = null;
   let invitePreviewCode = "";
@@ -147,15 +158,32 @@
 
   const makeListingCard = (listing) => {
     const card = document.createElement("article");
-    card.className = "server-listing-card";
+    card.className = listing.is_official
+      ? "server-listing-card server-listing-card-official"
+      : "server-listing-card";
 
     const banner = document.createElement("div");
     banner.className = "listing-banner";
+    if (listing.is_official) {
+      banner.classList.add("listing-banner-official");
+    }
     const bannerUrl = assetUrl(listing.guild_id, listing.guild_banner_hash, "banners");
     if (bannerUrl) {
       banner.style.backgroundImage = `url("${bannerUrl}")`;
     }
-    banner.append(makeIcon(listing.guild_id, listing.guild_icon_hash));
+    if (listing.is_official) {
+      const officialBadge = document.createElement("span");
+      officialBadge.className = "listing-official-badge";
+      officialBadge.textContent = "Official";
+      banner.append(officialBadge);
+      const icon = document.createElement("img");
+      icon.className = "listing-server-icon";
+      icon.src = "/giant-logo.png";
+      icon.alt = "";
+      banner.append(icon);
+    } else {
+      banner.append(makeIcon(listing.guild_id, listing.guild_icon_hash));
+    }
 
     const body = document.createElement("div");
     body.className = "listing-card-body";
@@ -196,19 +224,25 @@
 
   const renderListings = () => {
     const query = searchInput.value.trim().toLocaleLowerCase();
-    const matchingListings = listings.filter((listing) =>
+    const matchingListings = listings.filter(
+      (listing) => listing.invite_code !== officialListing.invite_code,
+    ).filter((listing) =>
       [listing.title, listing.description, listing.guild_name]
         .join(" ")
         .toLocaleLowerCase()
         .includes(query),
     );
 
-    resultCount.textContent = `${numberFormatter.format(matchingListings.length)} ${
-      matchingListings.length === 1 ? "server" : "servers"
+    const visibleListingCount = matchingListings.length + 1;
+    resultCount.textContent = `${numberFormatter.format(visibleListingCount)} ${
+      visibleListingCount === 1 ? "server" : "servers"
     }`;
     resultsContainer.replaceChildren();
 
+    resultsContainer.append(makeListingCard(officialListing));
+
     if (matchingListings.length === 0) {
+      if (!query) return;
       const emptyState = document.createElement("p");
       emptyState.className = "directory-empty";
       emptyState.textContent = directoryUnavailable

@@ -785,6 +785,31 @@ h2 span {
   border-color: rgba(166, 157, 255, 0.3);
 }
 
+.server-listing-card-official {
+  border-color: rgba(129, 116, 255, 0.38);
+  box-shadow: 0 0 24px rgba(129, 116, 255, 0.08);
+}
+
+.listing-banner-official {
+  background:
+    radial-gradient(ellipse at 75% 30%, rgba(129, 116, 255, 0.58), transparent 55%),
+    linear-gradient(120deg, #343064, #171827);
+}
+
+.listing-official-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 9px;
+  border: 1px solid rgba(202, 195, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 16, 29, 0.78);
+  color: #d7d1ff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
 .listing-banner {
   height: 92px;
   position: relative;
