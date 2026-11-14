@@ -63,7 +63,7 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "The request body must be valid JSON." }, 400, allowedOrigin);
   }
 
-  const redirectUri = new URL("/dashboard", allowedOrigin).href;
+  const redirectUri = allowedOrigin;
   if (
     typeof body.code !== "string" ||
     body.code.length < 1 ||

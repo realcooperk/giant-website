@@ -20,6 +20,17 @@ if (dashboardLoginLink) {
   });
 }
 
+const authorizationResponse = new URLSearchParams(window.location.search);
+if (authorizationResponse.has("code") || authorizationResponse.has("error")) {
+  const dashboardParams = new URLSearchParams();
+  ["code", "state", "iss", "error", "error_description"].forEach((key) => {
+    const value = authorizationResponse.get(key);
+    if (value !== null) dashboardParams.set(key, value);
+  });
+  window.history.replaceState(null, "", window.location.pathname);
+  window.location.replace(`/dashboard/?${dashboardParams.toString()}`);
+}
+
 document.getElementById("server-count").textContent =
   `${numberFormatter.format(giantStats.servers)}+`;
 document.getElementById("user-count").textContent =

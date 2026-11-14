@@ -28,7 +28,7 @@
 
   const applicationId = "1385271103030689863";
   const stateKey = "giant-dashboard-oauth-state";
-  const callbackUrl = new URL("/dashboard", window.location.origin);
+  const oauthRedirectUri = window.location.origin;
   const endpointUrl = (() => {
     try {
       const supabaseUrl = new URL(config.supabaseUrl);
@@ -170,7 +170,7 @@
         apikey: config.supabaseAnonKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code, redirect_uri: callbackUrl.href }),
+      body: JSON.stringify({ code, redirect_uri: oauthRedirectUri }),
     });
 
     let result;
@@ -202,7 +202,7 @@
     const authorizeUrl = new URL("https://discord.com/oauth2/authorize");
     authorizeUrl.searchParams.set("client_id", applicationId);
     authorizeUrl.searchParams.set("response_type", "code");
-    authorizeUrl.searchParams.set("redirect_uri", callbackUrl.href);
+    authorizeUrl.searchParams.set("redirect_uri", oauthRedirectUri);
     authorizeUrl.searchParams.set("scope", "identify email guilds");
     authorizeUrl.searchParams.set("state", stateValue);
     window.location.assign(authorizeUrl.href);
@@ -225,7 +225,7 @@
 
   const authorizationState = callbackParams.get("state");
   const issuer = callbackParams.get("iss");
-  window.history.replaceState(null, "", callbackUrl.pathname);
+  window.history.replaceState(null, "", window.location.pathname);
 
   const expectedState = sessionStorage.getItem(stateKey);
   sessionStorage.removeItem(stateKey);
@@ -245,7 +245,11 @@
     loadDashboard(authorizationCode)
       .catch((error) => {
         console.error("Could not load the dashboard:", error);
-        setStatus(error.message || "Could not load your servers. Please try again.", true);
+        const message =
+          error instanceof TypeError
+            ? "Could not reach the dashboard service. Deploy the Supabase dashboard function and set DASHBOARD_ORIGIN to https://giant-bot.xyz."
+            : error.message || "Could not load your servers. Please try again.";
+        setStatus(message, true);
       })
       .finally(() => {
         loginButton.disabled = false;
