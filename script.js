@@ -6,15 +6,18 @@ const giantStats = {
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
-const authorizationUrl = new URL(window.location.href);
-if (authorizationUrl.searchParams.has("code")) {
-  authorizationUrl.searchParams.delete("code");
-  window.history.replaceState(
-    null,
-    "",
-    `${authorizationUrl.pathname}${authorizationUrl.search}${authorizationUrl.hash}`,
-  );
-  window.location.replace("/dashboard/");
+const dashboardLoginLink = document.querySelector(".header-login");
+if (dashboardLoginLink) {
+  dashboardLoginLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const stateValue = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    sessionStorage.setItem("giant-dashboard-oauth-state", stateValue);
+
+    const authorizeUrl = new URL(dashboardLoginLink.href);
+    authorizeUrl.searchParams.set("state", stateValue);
+    window.location.assign(authorizeUrl.href);
+  });
 }
 
 document.getElementById("server-count").textContent =

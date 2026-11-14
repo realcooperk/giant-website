@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090a12" />
+    <meta
+      name="description"
+      content="Manage Giant in the Discord servers where you have Administrator permission."
+    />
     <title>Dashboard — Giant</title>
     <link rel="icon" type="image/png" href="/giant-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,15 +26,37 @@
       </a>
       <a class="button button-small button-outline" href="/">Back to home</a>
     </header>
-    <main class="document-main">
-      <section class="dashboard-panel">
+    <main class="document-main dashboard-main">
+      <section class="dashboard-panel" aria-labelledby="dashboard-title">
         <div class="document-kicker">GIANT DASHBOARD</div>
-        <h1>Coming soon<span>.</span></h1>
+        <h1 id="dashboard-title">Your servers<span>.</span></h1>
         <p class="document-intro">
-          The Giant dashboard is still being built. Check back soon for server
-          settings and more.
+          Sign in with Discord to see servers where you have Administrator permission.
         </p>
-        <a class="button button-primary" href="/">Back to Giant <span aria-hidden="true">→</span></a>
+
+        <div id="dashboard-user" class="dashboard-user" hidden>
+          <img id="dashboard-user-avatar" src="/giant-logo.png" alt="" />
+          <span id="dashboard-user-name"></span>
+          <button id="dashboard-logout" class="dashboard-logout" type="button">Sign out</button>
+        </div>
+
+        <div id="dashboard-login">
+          <button id="discord-login" class="button button-primary" type="button">
+            Log in with Discord
+          </button>
+        </div>
+
+        <p id="dashboard-status" class="dashboard-status" role="status" aria-live="polite">
+          Sign in to load your servers.
+        </p>
+
+        <section id="dashboard-server-section" class="dashboard-server-section" aria-labelledby="server-list-title" hidden>
+          <div class="dashboard-server-heading">
+            <h2 id="server-list-title">Servers you can manage</h2>
+            <span id="dashboard-server-count" class="dashboard-server-count"></span>
+          </div>
+          <div id="dashboard-server-list" class="dashboard-server-list"></div>
+        </section>
       </section>
     </main>
     <footer class="site-footer">
@@ -43,5 +69,7 @@
         <a href="/privacy/">Privacy Policy</a>
       </nav>
     </footer>
+    <script src="/directory-config.js"></script>
+    <script src="/dashboard/dashboard.js"></script>
   </body>
 </html>
