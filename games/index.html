@@ -4,8 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090a12" />
-    <title>Games — Giant</title>
-    <link rel="icon" type="image/png" href="/giant-logo.png" />
+    <title>Games</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,21 +14,8 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="polytrack-page">
-    <header class="polytrack-header">
-      <a class="brand" href="/" aria-label="Giant home">
-        <img src="/giant-logo.png" alt="" />
-        <span>giant<span class="brand-period">.</span></span>
-      </a>
+    <header class="polytrack-header games-header">
       <h1>Games</h1>
-      <a
-        class="button button-small button-outline polytrack-open"
-        id="open-game"
-        href="https://nintendoboi22.github.io/games/poly-track/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Open game directly
-      </a>
     </header>
     <main class="polytrack-main games-main">
       <div class="games-controls">
@@ -37,13 +23,17 @@
         <select id="game-select">
           <option value="https://nintendoboi22.github.io/games/poly-track/">PolyTrack</option>
           <option value="https://nintendoboi22.github.io/games/stickman-hook">Stickman Hook</option>
-          <option value="https://nintendoboi22.github.io/games/wheely-1">Wheely 1</option>
+          <option value="https://nintendoboi22.github.io/games/snake-io">Snake.io</option>
           <option value="https://nintendoboi22.github.io/games/crossy-road">Crossy Road</option>
           <option value="https://nintendoboi22.github.io/games/drift-hunters">Drift Hunters</option>
           <option value="https://nintendoboi22.github.io/games/flappy-birb">Flappy Birb</option>
           <option value="https://nintendoboi22.github.io/games/retro-bowl">Retro Bowl</option>
           <option value="https://nintendoboi22.github.io/games/REAL-FS">Flight Sim</option>
         </select>
+        <button class="button button-small button-outline" id="fullscreen-game" type="button">
+          Fullscreen
+        </button>
+        <span class="games-fullscreen-status" id="fullscreen-status" role="status" hidden></span>
       </div>
       <iframe
         class="polytrack-frame games-frame"
@@ -54,27 +44,39 @@
         referrerpolicy="strict-origin-when-cross-origin"
       ></iframe>
       <p class="polytrack-fallback games-fallback">
-        If the game does not load here,
-        <a href="https://nintendoboi22.github.io/games/poly-track/" target="_blank" rel="noopener noreferrer" id="fallback-open">
-          open PolyTrack directly
-        </a>.
+        If the game does not load here, it may not support embedding.
       </p>
     </main>
     <script>
       const gameSelect = document.getElementById("game-select");
       const gameFrame = document.querySelector(".games-frame");
-      const openGame = document.getElementById("open-game");
-      const fallbackOpen = document.getElementById("fallback-open");
+      const fullscreenButton = document.getElementById("fullscreen-game");
+      const fullscreenStatus = document.getElementById("fullscreen-status");
 
       gameSelect.addEventListener("change", () => {
         const gameName = gameSelect.options[gameSelect.selectedIndex].text;
-        const gameUrl = gameSelect.value;
-
-        gameFrame.src = gameUrl;
+        gameFrame.src = gameSelect.value;
         gameFrame.title = `${gameName} game`;
-        openGame.href = gameUrl;
-        fallbackOpen.href = gameUrl;
-        fallbackOpen.textContent = `open ${gameName} directly`;
+      });
+
+      fullscreenButton.addEventListener("click", async () => {
+        try {
+          if (document.fullscreenElement === gameFrame) {
+            await document.exitFullscreen();
+          } else {
+            await gameFrame.requestFullscreen();
+          }
+          fullscreenStatus.hidden = true;
+          fullscreenStatus.textContent = "";
+        } catch {
+          fullscreenStatus.textContent = "Fullscreen is unavailable in this browser.";
+          fullscreenStatus.hidden = false;
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        fullscreenButton.textContent =
+          document.fullscreenElement === gameFrame ? "Exit fullscreen" : "Fullscreen";
       });
     </script>
   </body>

@@ -1300,8 +1300,14 @@ h2 span {
   padding-bottom: 12px;
 }
 
+.games-header {
+  display: flex;
+  justify-content: center;
+}
+
 .games-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   color: var(--muted);
@@ -1321,6 +1327,16 @@ h2 span {
 .games-controls select:focus-visible {
   outline: 2px solid #b8afff;
   outline-offset: 2px;
+}
+
+.games-controls button {
+  cursor: pointer;
+}
+
+.games-fullscreen-status {
+  flex-basis: 100%;
+  color: #ffb7b7;
+  font-size: 12px;
 }
 
 .games-frame {
