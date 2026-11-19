@@ -1314,17 +1314,32 @@ h2 span {
   font-size: 13px;
 }
 
-.games-controls select {
-  min-width: 190px;
-  padding: 9px 34px 9px 12px;
+.games-menu {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-choice {
+  padding: 8px 11px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #10111a;
-  color: #fff;
+  color: var(--muted);
   font: inherit;
+  cursor: pointer;
 }
 
-.games-controls select:focus-visible {
+.game-choice:hover,
+.game-choice[aria-pressed="true"] {
+  border-color: rgba(184, 175, 255, 0.6);
+  background: rgba(184, 175, 255, 0.12);
+  color: #fff;
+}
+
+.game-choice:focus-visible,
+.games-controls button:focus-visible {
   outline: 2px solid #b8afff;
   outline-offset: 2px;
 }
