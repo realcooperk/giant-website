@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090a12" />
-    <title>Games</title>
+    <title>Made by Cooper</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,46 +15,55 @@
   </head>
   <body class="polytrack-page">
     <header class="polytrack-header games-header">
-      <h1>Games</h1>
+      <h1>Made by Cooper</h1>
     </header>
     <main class="polytrack-main games-main">
-      <div class="games-controls">
-        <div class="games-menu" role="group" aria-label="Choose a game">
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/poly-track/" data-title="PolyTrack" aria-pressed="true">PolyTrack</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/stickman-hook" data-title="Stickman Hook" aria-pressed="false">Stickman Hook</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/snake-io" data-title="Snake.io" aria-pressed="false">Snake.io</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/crossy-road" data-title="Crossy Road" aria-pressed="false">Crossy Road</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/drift-hunters" data-title="Drift Hunters" aria-pressed="false">Drift Hunters</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/flappy-birb" data-title="Flappy Birb" aria-pressed="false">Flappy Birb</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/retro-bowl" data-title="Retro Bowl" aria-pressed="false">Retro Bowl</button>
-          <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/REAL-FS" data-title="Flight Sim" aria-pressed="false">Flight Sim</button>
-        </div>
-        <button class="button button-small button-outline" id="fullscreen-game" type="button">
-          Fullscreen
-        </button>
-        <span class="games-fullscreen-status" id="fullscreen-status" role="status" hidden></span>
+      <div class="games-menu" role="group" aria-label="Choose a game">
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/poly-track/" data-title="PolyTrack" aria-pressed="false">PolyTrack</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/stickman-hook" data-title="Stickman Hook" aria-pressed="false">Stickman Hook</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/snake-io" data-title="Snake.io" aria-pressed="false">Snake.io</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/block-blast" data-title="Block Blast" aria-pressed="false">Block Blast</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/basketball-stars" data-title="Basketball Stars" aria-pressed="false">Basketball Stars</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/crossy-road" data-title="Crossy Road" aria-pressed="false">Crossy Road</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/drift-hunters" data-title="Drift Hunters" aria-pressed="false">Drift Hunters</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/flappy-birb" data-title="Flappy Birb" aria-pressed="false">Flappy Birb</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/retro-bowl" data-title="Retro Bowl" aria-pressed="false">Retro Bowl</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/REAL-FS" data-title="Flight Sim" aria-pressed="false">Flight Sim</button>
       </div>
-      <iframe
-        class="polytrack-frame games-frame"
-        src="https://nintendoboi22.github.io/games/poly-track/"
-        title="PolyTrack game"
-        allow="fullscreen; gamepad"
-        allowfullscreen
-        referrerpolicy="strict-origin-when-cross-origin"
-      ></iframe>
-      <p class="polytrack-fallback games-fallback">
-        If the game does not load here, it may not support embedding.
-      </p>
+      <section class="games-stage" id="game-stage" aria-label="Game player" hidden>
+        <div class="games-game-controls">
+          <span class="games-fullscreen-status" id="fullscreen-status" role="status" hidden></span>
+          <button class="button button-small button-outline" id="fullscreen-game" type="button">
+            Fullscreen
+          </button>
+        </div>
+        <iframe
+          class="polytrack-frame games-frame"
+          src="about:blank"
+          title="Selected game will appear here"
+          allow="fullscreen; gamepad"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+        <p class="polytrack-fallback games-fallback">
+          If the game does not load here, it may not support embedding.
+        </p>
+      </section>
     </main>
     <script>
       const gameFrame = document.querySelector(".games-frame");
+      const gameStage = document.getElementById("game-stage");
       const fullscreenButton = document.getElementById("fullscreen-game");
       const fullscreenStatus = document.getElementById("fullscreen-status");
 
       document.querySelectorAll(".game-choice").forEach((choice) => {
         choice.addEventListener("click", () => {
+          gameStage.hidden = false;
+          document.querySelector(".games-main").classList.add("has-selected-game");
           gameFrame.src = choice.dataset.url;
           gameFrame.title = `${choice.dataset.title} game`;
+          fullscreenStatus.hidden = true;
+          fullscreenStatus.textContent = "";
           document.querySelectorAll(".game-choice").forEach((gameChoice) => {
             gameChoice.setAttribute("aria-pressed", String(gameChoice === choice));
           });
