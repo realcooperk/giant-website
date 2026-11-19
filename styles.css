@@ -1293,6 +1293,47 @@ h2 span {
   text-underline-offset: 3px;
 }
 
+.games-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.games-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.games-controls select {
+  min-width: 190px;
+  padding: 9px 34px 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #10111a;
+  color: #fff;
+  font: inherit;
+}
+
+.games-controls select:focus-visible {
+  outline: 2px solid #b8afff;
+  outline-offset: 2px;
+}
+
+.games-frame {
+  flex: 1;
+  min-height: 180px;
+  height: auto;
+}
+
+.games-fallback {
+  position: static;
+  flex: none;
+}
+
 .document-kicker {
   margin-bottom: 13px;
   color: #aaa5fa;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090a12" />
-    <title>PolyTrack — Giant</title>
+    <title>Games — Giant</title>
     <link rel="icon" type="image/png" href="/giant-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,9 +20,10 @@
         <img src="/giant-logo.png" alt="" />
         <span>giant<span class="brand-period">.</span></span>
       </a>
-      <h1>PolyTrack</h1>
+      <h1>Games</h1>
       <a
         class="button button-small button-outline polytrack-open"
+        id="open-game"
         href="https://nintendoboi22.github.io/games/poly-track/"
         target="_blank"
         rel="noopener noreferrer"
@@ -30,21 +31,50 @@
         Open game directly
       </a>
     </header>
-    <main class="polytrack-main">
+    <main class="polytrack-main games-main">
+      <div class="games-controls">
+        <label for="game-select">Choose a game</label>
+        <select id="game-select">
+          <option value="https://nintendoboi22.github.io/games/poly-track/">PolyTrack</option>
+          <option value="https://nintendoboi22.github.io/games/cookie-clicker">Cookie Clicker</option>
+          <option value="https://nintendoboi22.github.io/games/crossy-road">Crossy Road</option>
+          <option value="https://nintendoboi22.github.io/games/drift-hunters">Drift Hunters</option>
+          <option value="https://nintendoboi22.github.io/games/flappy-birb">Flappy Birb</option>
+          <option value="https://nintendoboi22.github.io/games/retro-bowl">Retro Bowl</option>
+          <option value="https://nintendoboi22.github.io/games/REAL-FS">Flight Sim</option>
+        </select>
+      </div>
       <iframe
-        class="polytrack-frame"
+        class="polytrack-frame games-frame"
         src="https://nintendoboi22.github.io/games/poly-track/"
         title="PolyTrack game"
         allow="fullscreen; gamepad"
         allowfullscreen
         referrerpolicy="strict-origin-when-cross-origin"
       ></iframe>
-      <p class="polytrack-fallback">
+      <p class="polytrack-fallback games-fallback">
         If the game does not load here,
-        <a href="https://nintendoboi22.github.io/games/poly-track/" target="_blank" rel="noopener noreferrer">
+        <a href="https://nintendoboi22.github.io/games/poly-track/" target="_blank" rel="noopener noreferrer" id="fallback-open">
           open PolyTrack directly
         </a>.
       </p>
     </main>
+    <script>
+      const gameSelect = document.getElementById("game-select");
+      const gameFrame = document.querySelector(".games-frame");
+      const openGame = document.getElementById("open-game");
+      const fallbackOpen = document.getElementById("fallback-open");
+
+      gameSelect.addEventListener("change", () => {
+        const gameName = gameSelect.options[gameSelect.selectedIndex].text;
+        const gameUrl = gameSelect.value;
+
+        gameFrame.src = gameUrl;
+        gameFrame.title = `${gameName} game`;
+        openGame.href = gameUrl;
+        fallbackOpen.href = gameUrl;
+        fallbackOpen.textContent = `open ${gameName} directly`;
+      });
+    </script>
   </body>
 </html>
