@@ -230,7 +230,7 @@ nose.rotation.x=-Math.PI/2;
 nose.position.z=-12;
 plane.add(nose);
 
-// Wings
+// WINGS
 
 const wingShape=new THREE.Shape();
 wingShape.moveTo(-1.3,-2);
@@ -271,7 +271,7 @@ plane.add(propeller);
 box(propeller,0,0,0,.45,8,.3,black);
 box(propeller,0,0,0,8,.45,.3,black);
 
-// Landing gear
+// LANDING GEAR
 
 for(const x of [-2.3,2.3]){
  const leg=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,2,8),metal);
@@ -294,6 +294,7 @@ plane.add(tailWheel);
 let position=new THREE.Vector3(0,2,580);
 let heading=0,pitch=0,bank=0,speed=0,throttle=0,verticalSpeed=0;
 let started=false,crashed=false,cameraMode=0;
+let hasTakenOff=false;
 
 const keys={};
 
@@ -328,11 +329,17 @@ function resetPlane(){
  speed=0;
  throttle=0;
  verticalSpeed=0;
+ hasTakenOff=false;
  crashed=false;
+
  document.getElementById("powerSlider").value=0;
+ document.getElementById("power").textContent="0%";
  document.getElementById("crash").classList.add("hidden");
  document.getElementById("status").textContent="AIRCRAFT PARKED";
+
  plane.visible=true;
+ plane.position.copy(position);
+ plane.rotation.set(0,0,0);
 }
 
 document.getElementById("restart").onclick=resetPlane;
@@ -354,32 +361,32 @@ function crash(reason){
  document.getElementById("crash").classList.remove("hidden");
 }
 
-// PHYSICS
+// FLIGHT PHYSICS
 
 function update(dt){
  if(!started||crashed)return;
 
  dt=Math.min(dt,.04);
 
- // Throttle
+ // THROTTLE
 
  if(keys.ShiftLeft||keys.ShiftRight)throttle+=25*dt;
  if(keys.ControlLeft||keys.ControlRight)throttle-=25*dt;
  throttle=THREE.MathUtils.clamp(throttle,0,100);
 
- // Pitch
+ // PITCH
 
  let pitchInput=0;
  if(keys.KeyW)pitchInput=1;
  if(keys.KeyS)pitchInput=-1;
 
  pitch=THREE.MathUtils.clamp(
- pitch+pitchInput*dt*.65,-.45,.45
+  pitch+pitchInput*dt*.65,-.45,.45
  );
 
  if(!pitchInput)pitch=THREE.MathUtils.damp(pitch,0,.18,dt);
 
- // Banking
+ // BANK
 
  let bankInput=0;
  if(keys.KeyD)bankInput=1;
@@ -387,21 +394,22 @@ function update(dt){
 
  bank=THREE.MathUtils.damp(bank,bankInput*.65,2.2,dt);
 
- // Rudder
+ // RUDDER
 
  let rudder=0;
  if(keys.KeyQ)rudder=1;
  if(keys.KeyE)rudder=-1;
 
- // Ground detection
+ // GROUND DETECTION
 
  const groundY=terrainHeight(position.x,position.z)+2;
  const onGround=position.y<=groundY+.05;
 
- // Brakes ONLY on ground
+ // BRAKES ONLY WORK ON THE GROUND
+
  const braking=onGround&&keys.Space;
 
- // Engine
+ // ENGINE
 
  const enginePower=throttle/100;
  const drag=.004*speed*speed;
@@ -409,7 +417,7 @@ function update(dt){
 
  speed=Math.max(0,Math.min(125,speed+acceleration*dt));
 
- // Lift and pitch
+ // LIFT AND PITCH
 
  const airspeed=speed;
  const liftFactor=THREE.MathUtils.clamp((airspeed-12)/55,0,1.4);
@@ -419,73 +427,59 @@ function update(dt){
  const verticalAcceleration=climbForce+lift*.16-1.8;
  verticalSpeed+=(verticalAcceleration-verticalSpeed*.12)*dt;
 
- // Turns
+ // COORDINATED TURNS
 
  const turnRate=Math.sin(bank)*Math.min(airspeed/35,1.5)*.65;
- heading+=turnRate*dt;
+ heading-=turnRate*dt;
  heading+=rudder*.35*dt*Math.min(airspeed/25,1);
 
- // Movement
+ // AIRCRAFT ROTATION AND FORWARD DIRECTION
 
- const forward=new THREE.Vector3(
- -Math.sin(heading),0,-Math.cos(heading)
- );
+ plane.rotation.order="YXZ";
+ plane.rotation.set(pitch,heading,-bank);
 
- position.addScaledVector(forward,airspeed*dt);
+ const forward=new THREE.Vector3(0,0,-1);
+ forward.applyEuler(plane.rotation);
+ forward.normalize();
+
+ // MOVEMENT
+
+ position.x+=forward.x*airspeed*dt;
+ position.z+=forward.z*airspeed*dt;
  position.y+=verticalSpeed*dt;
 
- // Landing / crash detection
+ // GROUND CONTACT
+ // Taxiing is allowed before takeoff. After takeoff, ANY ground
+ // contact causes a crash, including a gentle landing.
 
  const newGround=terrainHeight(position.x,position.z)+2;
 
+ if(position.y>newGround+.5){
+  hasTakenOff=true;
+ }
+
  if(position.y<=newGround){
 
-  const impactSpeed=Math.abs(verticalSpeed);
-  const landingSpeed=speed;
-  const impactPitch=Math.abs(pitch);
-  const impactBank=Math.abs(bank);
-
-  // Detect hard impacts and unsuitable landing attitudes
-  if(impactSpeed>11){
-   crash("Hard landing! The aircraft hit the ground too fast.");
+  if(hasTakenOff){
+   crash("The aircraft struck the ground. Flight ended.");
    return;
   }
 
-  if(landingSpeed>48){
-   crash("Landing speed was too high. The aircraft could not stop safely.");
-   return;
-  }
-
-  if(impactPitch>.38){
-   crash("The aircraft struck the ground at an unsafe pitch angle.");
-   return;
-  }
-
-  if(impactBank>.42&&landingSpeed>12){
-   crash("The aircraft touched down with excessive bank.");
-   return;
-  }
-
-  // Safe ground contact
+  // Allow the aircraft to start and taxi on the runway.
   position.y=newGround;
   verticalSpeed=0;
 
-  // Reduce bouncing and pitching after touchdown
   pitch=THREE.MathUtils.damp(pitch,0,5,dt);
   bank=THREE.MathUtils.damp(bank,0,4,dt);
  }
 
- // Aircraft orientation
+ // UPDATE AIRCRAFT
 
  plane.position.copy(position);
- plane.rotation.order="YXZ";
- plane.rotation.y=heading;
- plane.rotation.x=pitch;
- plane.rotation.z=-bank;
 
  propeller.rotation.z-=airspeed*.4*dt+enginePower*30*dt;
 
- // Instruments
+ // INSTRUMENTS
 
  const altitude=Math.max(0,position.y-newGround);
 
@@ -506,7 +500,9 @@ function update(dt){
 // CAMERA
 
 function updateCamera(){
- const forward=new THREE.Vector3(-Math.sin(heading),0,-Math.cos(heading));
+ const forward=new THREE.Vector3(
+  -Math.sin(heading),0,-Math.cos(heading)
+ );
 
  if(cameraMode===0){
   camera.position.copy(position).add(
@@ -518,6 +514,7 @@ function updateCamera(){
  if(cameraMode===1){
   const p=position.clone().add(new THREE.Vector3(0,1.5,0));
   p.addScaledVector(forward,1);
+
   camera.position.copy(p);
   camera.rotation.order="YXZ";
   camera.rotation.set(pitch,heading,0);
@@ -528,6 +525,7 @@ function updateCamera(){
   p.x+=12*Math.cos(heading);
   p.z+=12*Math.sin(heading);
   p.y+=3;
+
   camera.position.copy(p);
   camera.lookAt(position.clone().addScaledVector(forward,40));
  }
@@ -541,13 +539,21 @@ for(let i=0;i<35;i++){
  const cloud=new THREE.Group();
 
  for(let j=0;j<5;j++){
-  const puff=new THREE.Mesh(new THREE.SphereGeometry(18+Math.random()*13,10,8),cloudMat);
+  const puff=new THREE.Mesh(
+   new THREE.SphereGeometry(18+Math.random()*13,10,8),
+   cloudMat
+  );
   puff.position.set(j*17,Math.random()*8,Math.random()*8);
   puff.scale.y=.65;
   cloud.add(puff);
  }
 
- cloud.position.set((Math.random()-.5)*4500,180+Math.random()*220,(Math.random()-.5)*4500);
+ cloud.position.set(
+  (Math.random()-.5)*4500,
+  180+Math.random()*220,
+  (Math.random()-.5)*4500
+ );
+
  scene.add(cloud);
 }
 
