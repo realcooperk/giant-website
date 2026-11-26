@@ -1,0 +1,596 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101820">
+<title>Cooper Flight Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#101820;color:white;font-family:Arial,sans-serif;overflow:hidden}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:18px;left:20px;right:20px;display:flex;justify-content:space-between}
+.logo,.hudbox{background:#101820cc;border:1px solid #ffffff25;border-radius:9px;padding:12px}
+.logo{font-weight:bold;letter-spacing:1px;font-size:13px}
+#stats{position:absolute;top:75px;left:15px;display:grid;grid-template-columns:repeat(2,105px);gap:8px}
+.hudbox small{display:block;color:#aabac8;font-size:10px;margin-bottom:6px}
+.hudbox strong{font-size:19px}
+#heading{position:absolute;right:15px;top:75px}
+#throttle{position:absolute;right:15px;bottom:35px;width:150px}
+#throttle input{width:100%;accent-color:#3998ed}
+#bottom{position:absolute;bottom:18px;left:15px;color:#d5e0e9;font-size:11px;background:#101820bb;padding:12px;border-radius:8px;line-height:1.8}
+#status{position:absolute;top:170px;left:50%;transform:translateX(-50%);background:#101820bb;padding:10px 15px;border-radius:8px;font-size:12px;white-space:nowrap}
+#menu{position:fixed;inset:0;background:linear-gradient(#0b1925cc,#101820f2);display:flex;align-items:center;justify-content:center;padding:20px}
+.card{width:100%;max-width:420px;background:#182a38;border:1px solid #ffffff30;border-radius:18px;padding:32px;text-align:center}
+.card h1{font-size:30px;margin-bottom:12px}
+.card p{color:#b5c5d1;line-height:1.6;font-size:14px;margin-bottom:24px}
+button{cursor:pointer;border:0;border-radius:9px;padding:14px 20px;font-weight:bold}
+#start{background:#2589db;color:white;width:100%;font-size:16px}
+#menu small{display:block;margin-top:20px;color:#9babb9;line-height:1.7}
+#camera{pointer-events:auto;background:#243b4e;color:white;border:1px solid #ffffff30;padding:10px}
+#menu.hidden{display:none}
+@media(max-width:600px){
+ #bottom{font-size:9px;bottom:10px}
+ #stats{grid-template-columns:repeat(2,85px)}
+ .hudbox strong{font-size:15px}
+ #throttle{width:110px}
+}
+</style>
+</head>
+<body>
+
+<div id="hud">
+ <div id="top">
+  <div class="logo">COOPER FLIGHT SIMULATOR</div>
+  <button id="camera">CAMERA (C)</button>
+ </div>
+
+ <div id="stats">
+  <div class="hudbox"><small>AIRSPEED</small><strong id="speed">0</strong><small>KNOTS</small></div>
+  <div class="hudbox"><small>ALTITUDE</small><strong id="altitude">0</strong><small>FEET</small></div>
+  <div class="hudbox"><small>VERTICAL SPEED</small><strong id="vertical">0</strong><small>FT/MIN</small></div>
+  <div class="hudbox"><small>THROTTLE</small><strong id="power">0%</strong></div>
+ </div>
+
+ <div id="heading" class="hudbox">
+  <small>HEADING</small><strong id="hdg">360°</strong>
+ </div>
+
+ <div id="status">AIRCRAFT PARKED</div>
+
+ <div id="bottom">
+  W / S — PITCH<br>
+  A / D — ROLL<br>
+  Q / E — RUDDER<br>
+  SHIFT / CTRL — THROTTLE<br>
+  SPACE — BRAKES<br>
+  C — CHANGE POV<br>
+  R — RESET AIRCRAFT
+ </div>
+
+ <div id="throttle">
+  <div class="hudbox">
+   <small>ENGINE POWER</small>
+   <input id="powerSlider" type="range" min="0" max="100" value="0">
+  </div>
+ </div>
+</div>
+
+<div id="menu">
+ <div class="card">
+  <h1>Cooper Flight Sim</h1>
+  <p>
+   Welcome aboard. Take control of your aircraft,
+   depart from the airport and explore the surrounding
+   landscape. Practice your takeoffs and landings.
+  </p>
+  <button id="start">START FLIGHT</button>
+  <small>
+   3D WORLD · AIRPORT · TERRAIN<br>
+   KEYBOARD AND MOUSE SUPPORT
+  </small>
+ </div>
+</div>
+
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js";
+
+// SCENE
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87bce5);
+scene.fog = new THREE.Fog(0x87bce5,1200,7000);
+
+const camera = new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,10000);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.shadowMap.enabled=true;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xc9e8ff,0x52643b,2));
+
+const sun=new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(-400,900,300);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+scene.add(sun);
+
+// MATERIALS
+
+const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+
+const grass=mat(0x567f40);
+const asphalt=mat(0x343a40);
+const concrete=mat(0x858b90);
+const white=mat(0xffffff);
+const yellow=mat(0xf5cb45);
+const glass=mat(0x4389a9,.25);
+const metal=mat(0xbac6ce,.4);
+const dark=mat(0x17232c);
+const blue=mat(0x2476c4,.45);
+
+// TERRAIN
+
+function terrainHeight(x,z){
+ const d=Math.sqrt(x*x+z*z);
+ if(d<850)return 0;
+ return Math.sin(x*.002)*25+
+ Math.cos(z*.0025)*32+
+ Math.sin((x+z)*.0015)*18+
+ Math.max(0,d-850)*.035;
+}
+
+const terrain=new THREE.PlaneGeometry(6000,6000,130,130);
+terrain.rotateX(-Math.PI/2);
+
+const p=terrain.attributes.position;
+const colors=[];
+
+const c1=new THREE.Color(0x527b40);
+const c2=new THREE.Color(0x365f37);
+const c3=new THREE.Color(0x827c57);
+
+for(let i=0;i<p.count;i++){
+ const x=p.getX(i),z=p.getZ(i);
+ const h=terrainHeight(x,z);
+ p.setY(i,h);
+ const variation=Math.sin(x*.015)*Math.cos(z*.013);
+ const color=h>35?c3:variation<-.25?c2:c1;
+ colors.push(color.r,color.g,color.b);
+}
+
+terrain.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+terrain.computeVertexNormals();
+
+const ground=new THREE.Mesh(terrain,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
+ground.receiveShadow=true;
+scene.add(ground);
+
+// BUILDINGS AND AIRPORT
+
+function box(x,y,z,sx,sy,sz,material,parent=scene){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
+ m.position.set(x,y,z);
+ m.castShadow=true;
+ m.receiveShadow=true;
+ parent.add(m);
+ return m;
+}
+
+box(0,.15,0,85,.3,1600,asphalt);
+
+// Runway markings
+for(let z=-750;z<=750;z+=90){
+ box(0,.32,z,2,.06,40,white);
+}
+box(-39,.32,0,1,.06,1580,white);
+box(39,.32,0,1,.06,1580,white);
+
+for(let i=-3;i<=3;i++){
+ box(i*9,.35,-735,4,.07,45,white);
+ box(i*9,.35,735,4,.07,45,white);
+}
+
+// Taxiways
+box(115,.12,0,35,.25,1250,asphalt);
+box(115,.27,0,.8,.05,1200,yellow);
+
+for(let z=-500;z<=500;z+=250){
+ box(58,.13,z,115,.25,18,asphalt);
+}
+
+box(185,.15,0,100,.3,500,concrete);
+
+// Terminal
+box(200,13,0,130,26,180,concrete);
+box(200,27,0,140,2,190,asphalt);
+
+for(let z=-70;z<=70;z+=25){
+ box(132,13,z,2,15,18,glass);
+}
+
+// Hangars
+for(let i=0;i<4;i++){
+ let z=-250+i*150;
+ box(300,13,z,100,26,90,concrete);
+ box(300,27,z,105,2,95,asphalt);
+}
+
+// Control tower
+box(290,30,-130,15,60,15,concrete);
+box(290,63,-130,30,9,30,glass);
+
+// Buildings around airport
+for(let i=0;i<12;i++){
+ let x=450+Math.random()*500;
+ let z=(Math.random()-.5)*1300;
+ box(x,10,z,50,20,50,concrete);
+}
+
+// TREES
+
+const trunkMat=mat(0x65432a);
+const leafMat=mat(0x315d32);
+
+const trunkGeo=new THREE.CylinderGeometry(1,1.5,9,6);
+const leafGeo=new THREE.ConeGeometry(7,20,7);
+
+for(let i=0;i<350;i++){
+ const x=(Math.random()-.5)*4200;
+ const z=(Math.random()-.5)*4200;
+
+ if(Math.abs(x)<420&&Math.abs(z)<850)continue;
+
+ const h=terrainHeight(x,z);
+
+ const trunk=new THREE.Mesh(trunkGeo,trunkMat);
+ trunk.position.set(x,h+4,z);
+ scene.add(trunk);
+
+ const leaves=new THREE.Mesh(leafGeo,leafMat);
+ leaves.position.set(x,h+15,z);
+ scene.add(leaves);
+}
+
+// ROADS
+
+const roadMat=mat(0x454a4b);
+for(let i=0;i<9;i++){
+ const x=-1600+i*400;
+ box(x,terrainHeight(x,0)+.2,0,13,.3,3500,roadMat);
+}
+
+// AIRCRAFT
+
+const plane=new THREE.Group();
+scene.add(plane);
+
+const fuselage=box(0,0,0,2.8,2.8,22,blue,plane);
+fuselage.position.set(0,0,0);
+
+// Nose
+const nose=new THREE.Mesh(
+ new THREE.ConeGeometry(1.4,5,12),
+ blue
+);
+nose.rotation.x=-Math.PI/2;
+nose.position.z=-13;
+plane.add(nose);
+
+// Main wings
+box(0,0,0,39,.6,5,metal,plane);
+
+// Tail wings
+box(0,1,9,14,.4,3,metal,plane);
+
+// Vertical tail
+box(0,3,9,.5,5,3,blue,plane);
+
+// Cockpit
+const cockpit=new THREE.Mesh(
+ new THREE.SphereGeometry(2,16,12),
+ glass
+);
+cockpit.scale.set(1,.65,1.5);
+cockpit.position.set(0,1,-5);
+plane.add(cockpit);
+
+// Engine propeller
+const propeller=new THREE.Group();
+propeller.position.set(0,0,-16);
+plane.add(propeller);
+
+box(0,0,0,.5,9,.35,dark,propeller);
+box(0,0,0,9,.5,.35,dark,propeller);
+
+// Landing gear
+for(const x of [-1.3,1.3]){
+ const wheel=new THREE.Mesh(
+ new THREE.CylinderGeometry(.65,.65,.3,12),
+ dark
+ );
+ wheel.rotation.z=Math.PI/2;
+ wheel.position.set(x,-2,5);
+ plane.add(wheel);
+}
+
+// Tail wheel
+const tailWheel=new THREE.Mesh(
+ new THREE.CylinderGeometry(.4,.4,.25,10),
+ dark
+);
+tailWheel.rotation.z=Math.PI/2;
+tailWheel.position.set(0,-1.8,10);
+plane.add(tailWheel);
+
+// LIGHTS
+
+const redLight=new THREE.PointLight(0xff2222,1,35);
+redLight.position.set(-20,0,0);
+plane.add(redLight);
+
+const greenLight=new THREE.PointLight(0x22ff55,1,35);
+greenLight.position.set(20,0,0);
+plane.add(greenLight);
+
+// FLIGHT MODEL
+
+let position=new THREE.Vector3(0,2,580);
+let heading=0;
+let pitch=0;
+let roll=0;
+let speed=0;
+let throttle=0;
+let verticalSpeed=0;
+let started=false;
+let cameraMode=0;
+let brakes=false;
+
+const keys={};
+
+window.addEventListener("keydown",e=>{
+ keys[e.code]=true;
+
+ if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))
+ e.preventDefault();
+
+ if(e.repeat)return;
+
+ if(e.code==="KeyC")changeCamera();
+ if(e.code==="KeyR")resetPlane();
+});
+
+window.addEventListener("keyup",e=>{
+ keys[e.code]=false;
+});
+
+function changeCamera(){
+ cameraMode=(cameraMode+1)%3;
+ const names=["CHASE VIEW","COCKPIT VIEW","WING VIEW"];
+ document.getElementById("camera").textContent="POV: "+names[cameraMode];
+}
+
+document.getElementById("camera").onclick=changeCamera;
+
+document.getElementById("start").onclick=()=>{
+ started=true;
+ document.getElementById("menu").classList.add("hidden");
+ document.getElementById("status").textContent="READY FOR DEPARTURE";
+};
+
+function resetPlane(){
+ position.set(0,2,580);
+ heading=0;
+ pitch=0;
+ roll=0;
+ speed=0;
+ throttle=0;
+ verticalSpeed=0;
+ document.getElementById("powerSlider").value=0;
+}
+
+// PHYSICS
+
+const clock=new THREE.Clock();
+
+function update(dt){
+ if(!started)return;
+
+ dt=Math.min(dt,.04);
+
+ // Keyboard controls
+ if(keys.ShiftLeft||keys.ShiftRight)throttle+=35*dt;
+ if(keys.ControlLeft||keys.ControlRight)throttle-=35*dt;
+
+ throttle=THREE.MathUtils.clamp(throttle,0,100);
+
+ if(keys.KeyW)pitch=THREE.MathUtils.lerp(pitch,.25,dt*2);
+ else if(keys.KeyS)pitch=THREE.MathUtils.lerp(pitch,-.20,dt*2);
+ else pitch=THREE.MathUtils.lerp(pitch,0,dt*.8);
+
+ if(keys.KeyA)roll=THREE.MathUtils.lerp(roll,.65,dt*2);
+ else if(keys.KeyD)roll=THREE.MathUtils.lerp(roll,-.65,dt*2);
+ else roll=THREE.MathUtils.lerp(roll,0,dt*.7);
+
+ if(keys.KeyQ)heading+=dt*.55;
+ if(keys.KeyE)heading-=dt*.55;
+
+ if(keys.Space)brakes=true;
+ else brakes=false;
+
+ // Throttle and acceleration
+ const targetSpeed=throttle*.8;
+
+ if(brakes){
+ speed=Math.max(0,speed-35*dt);
+ }else{
+ speed+=((targetSpeed-speed)*.13+throttle*.12)*dt;
+ }
+
+ speed=THREE.MathUtils.clamp(speed,0,95);
+
+ // Aircraft lift
+ const lift=Math.max(0,(speed-20)*.045);
+ const climbing=pitch*speed*.30+lift*.025;
+
+ verticalSpeed+= (climbing-verticalSpeed)*dt*1.5;
+
+ // Aircraft movement
+ const direction=new THREE.Vector3(
+ Math.sin(heading),
+ 0,
+ -Math.cos(heading)
+ );
+
+ position.addScaledVector(direction,speed*dt);
+
+ position.y+=verticalSpeed*dt;
+
+ const groundY=terrainHeight(position.x,position.z)+2;
+
+ if(position.y<groundY){
+ position.y=groundY;
+ verticalSpeed=0;
+
+ if(speed<10)pitch=0;
+ }
+
+ // Banking turns
+ heading+=roll*speed*.0018*dt*60;
+
+ // Propeller
+ propeller.rotation.z-=speed*.12*dt+throttle*.0008;
+
+ plane.position.copy(position);
+ plane.rotation.order="YXZ";
+ plane.rotation.y=heading;
+ plane.rotation.x=-pitch;
+ plane.rotation.z=roll;
+
+ // Instruments
+ document.getElementById("speed").textContent=Math.round(speed*1.943);
+ document.getElementById("altitude").textContent=Math.max(0,Math.round((position.y-groundY)*3.281));
+ document.getElementById("vertical").textContent=Math.round(verticalSpeed*196.85);
+ document.getElementById("power").textContent=Math.round(throttle)+"%";
+ document.getElementById("hdg").textContent=String(Math.round((heading*180/Math.PI+360)%360)).padStart(3,"0")+"°";
+
+ const status=position.y<=groundY+2.1?
+ (speed<10?"PARKED":"ON GROUND"):
+ "AIRBORNE";
+
+ document.getElementById("status").textContent=status;
+
+ // Keep throttle slider synced
+ document.getElementById("powerSlider").value=throttle;
+}
+
+// CAMERA
+
+function updateCamera(){
+ const forward=new THREE.Vector3(
+ Math.sin(heading),0,-Math.cos(heading)
+ );
+
+ if(cameraMode===0){
+ const offset=new THREE.Vector3(
+ -forward.x*45,
+ 16,
+ -forward.z*45
+ );
+
+ camera.position.copy(position).add(offset);
+ camera.lookAt(position.x,position.y,position.z);
+ }
+
+ if(cameraMode===1){
+ const cockpitPosition=position.clone();
+ cockpitPosition.y+=1.5;
+ cockpitPosition.addScaledVector(forward,1);
+
+ camera.position.copy(cockpitPosition);
+ camera.rotation.order="YXZ";
+ camera.rotation.set(-pitch,heading,0);
+ }
+
+ if(cameraMode===2){
+ const wingPosition=position.clone();
+ wingPosition.y+=3;
+ wingPosition.x+=12;
+ wingPosition.addScaledVector(forward,3);
+
+ camera.position.copy(wingPosition);
+ camera.lookAt(position.clone().addScaledVector(forward,40));
+ }
+}
+
+// CLOUDS
+
+const cloudMat=new THREE.MeshStandardMaterial({
+ color:0xffffff,
+ roughness:1
+});
+
+for(let i=0;i<35;i++){
+ const cloud=new THREE.Group();
+ const x=(Math.random()-.5)*4500;
+ const y=180+Math.random()*220;
+ const z=(Math.random()-.5)*4500;
+
+ for(let j=0;j<5;j++){
+ const part=new THREE.Mesh(
+ new THREE.SphereGeometry(18+Math.random()*13,10,8),
+ cloudMat
+ );
+ part.position.set(j*17,Math.random()*8,Math.random()*8);
+ part.scale.y=.65;
+ cloud.add(part);
+ }
+
+ cloud.position.set(x,y,z);
+ scene.add(cloud);
+}
+
+// DAYLIGHT
+
+scene.add(new THREE.AmbientLight(0xffffff,.2));
+
+// THROTTLE SLIDER
+
+document.getElementById("powerSlider").addEventListener("input",e=>{
+ throttle=Number(e.target.value);
+});
+
+// ANIMATION
+
+camera.position.set(0,20,650);
+
+function animate(){
+ requestAnimationFrame(animate);
+
+ const dt=clock.getDelta();
+
+ update(dt);
+
+ if(started)updateCamera();
+
+ renderer.render(scene,camera);
+}
+
+animate();
+
+// RESIZE
+
+window.addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+
+</script>
+</body>
+</html>
