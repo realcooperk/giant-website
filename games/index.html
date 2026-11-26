@@ -1,105 +1,593 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#090a12" />
-    <title>Made by Cooper</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body class="polytrack-page">
-    <header class="polytrack-header games-header">
-      <h1>Made by Cooper</h1>
-    </header>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101820">
+<title>Cooper Flight Simulator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#101820;color:white;font-family:Arial}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:15px;left:15px;right:15px;display:flex;justify-content:space-between}
+.panel{background:#101820dd;border:1px solid #ffffff30;border-radius:9px;padding:11px}
+#camera{pointer-events:auto;background:#20374b;color:white;border:1px solid #ffffff30;border-radius:8px;padding:11px}
+#stats{position:absolute;top:72px;left:15px;display:grid;grid-template-columns:repeat(2,100px);gap:7px}
+small{display:block;color:#b2c3d0;font-size:10px;margin-bottom:5px}
+strong{font-size:19px}
+#heading{position:absolute;right:15px;top:72px}
+#bottom{position:absolute;bottom:15px;left:15px;font-size:11px;line-height:1.8;background:#101820dd;padding:12px;border-radius:9px}
+#throttle{position:absolute;right:15px;bottom:25px;width:150px}
+#throttle input{width:100%;accent-color:#3898ee}
+#status{position:absolute;top:175px;left:50%;transform:translateX(-50%);background:#101820dd;padding:10px;border-radius:8px;font-size:12px;white-space:nowrap}
+#menu,#crash{position:fixed;inset:0;background:#101820ee;display:grid;place-items:center;padding:20px;z-index:5}
+.card{background:#192c3b;border:1px solid #ffffff30;border-radius:17px;padding:30px;text-align:center;width:100%;max-width:400px}
+.card h1{font-size:28px}
+.card p{color:#b9c8d3;line-height:1.6;font-size:14px}
+.action{width:100%;padding:15px;background:#2589db;color:white;border:0;border-radius:9px;font-weight:bold;font-size:16px;margin-top:15px}
+#crash h1{color:#ff5555}
+.hidden{display:none!important}
+@media(max-width:500px){
+#stats{grid-template-columns:repeat(2,80px)}
+#bottom{font-size:9px}
+#throttle{width:110px}
+}
+</style>
+</head>
+<body>
 
-    <main class="polytrack-main games-main">
-      <div class="games-menu" role="group" aria-label="Choose a game">
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/poly-track/" data-title="PolyTrack" aria-pressed="false">PolyTrack</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/stickman-hook" data-title="Stickman Hook" aria-pressed="false">Stickman Hook</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/snake-io" data-title="Snake.io" aria-pressed="false">Snake.io</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/block-blast" data-title="Block Blast" aria-pressed="false">Block Blast</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/basketball-stars" data-title="Basketball Stars" aria-pressed="false">Basketball Stars</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/crossy-road" data-title="Crossy Road" aria-pressed="false">Crossy Road</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/drift-hunters" data-title="Drift Hunters" aria-pressed="false">Drift Hunters</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/flappy-birb" data-title="Flappy Birb" aria-pressed="false">Flappy Birb</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/retro-bowl" data-title="Retro Bowl" aria-pressed="false">Retro Bowl</button>
-        <button class="game-choice" type="button" data-url="https://giant-bot.xyz/games/flight-sim.html" data-title="Flight Sim 1" aria-pressed="false">Flight Sim 1</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/REAL-FS" data-title="Flight Sim 2" aria-pressed="false">Flight Sim 2</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/bit-planes/" data-title="Bit Planes" aria-pressed="false">Bit Planes</button>
-        <button class="game-choice" type="button" data-url="https://frontwars.io/" data-title="FrontWars" aria-pressed="false">FrontWars</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/snow-rider/" data-title="Snow Rider" aria-pressed="false">Snow Rider</button>
-      </div>
+<div id="hud">
+ <div id="top">
+  <div class="panel">COOPER FLIGHT SIMULATOR</div>
+  <button id="camera">POV: CHASE (C)</button>
+ </div>
 
-      <section class="games-stage" id="game-stage" aria-label="Game player" hidden>
-        <div class="games-game-controls">
-          <span class="games-fullscreen-status" id="fullscreen-status" role="status" hidden></span>
-          <button class="button button-small button-outline" id="fullscreen-game" type="button">
-            Fullscreen
-          </button>
-        </div>
+ <div id="stats">
+  <div class="panel"><small>AIRSPEED</small><strong id="speed">0</strong><small>KNOTS</small></div>
+  <div class="panel"><small>ALTITUDE</small><strong id="altitude">0</strong><small>FEET</small></div>
+  <div class="panel"><small>VERTICAL SPEED</small><strong id="vertical">0</strong><small>FT/MIN</small></div>
+  <div class="panel"><small>THROTTLE</small><strong id="power">0%</strong></div>
+ </div>
 
-        <iframe
-          class="polytrack-frame games-frame"
-          src="about:blank"
-          title="Selected game will appear here"
-          allow="fullscreen; gamepad"
-          allowfullscreen
-          referrerpolicy="strict-origin-when-cross-origin"
-        ></iframe>
+ <div id="heading" class="panel"><small>HEADING</small><strong id="hdg">360°</strong></div>
+ <div id="status">AIRCRAFT PARKED</div>
 
-        <p class="polytrack-fallback games-fallback">
-          If the game does not load here, it may not support embedding.
-        </p>
-      </section>
-    </main>
+ <div id="bottom">
+  W / S — PITCH UP / DOWN<br>
+  A / D — BANK LEFT / RIGHT<br>
+  Q / E — RUDDER<br>
+  SHIFT / CTRL — THROTTLE<br>
+  SPACE — GROUND BRAKES<br>
+  C — CHANGE POV<br>
+  R — RESET
+ </div>
 
-    <script>
-      const gameFrame = document.querySelector(".games-frame");
-      const gameStage = document.getElementById("game-stage");
-      const fullscreenButton = document.getElementById("fullscreen-game");
-      const fullscreenStatus = document.getElementById("fullscreen-status");
+ <div id="throttle" class="panel">
+  <small>ENGINE POWER</small>
+  <input id="powerSlider" type="range" min="0" max="100" value="0">
+ </div>
+</div>
 
-      document.querySelectorAll(".game-choice").forEach((choice) => {
-        choice.addEventListener("click", () => {
-          gameStage.hidden = false;
-          document.querySelector(".games-main").classList.add("has-selected-game");
-          gameFrame.src = choice.dataset.url;
-          gameFrame.title = `${choice.dataset.title} game`;
-          fullscreenStatus.hidden = true;
-          fullscreenStatus.textContent = "";
+<div id="menu">
+ <div class="card">
+  <h1>Cooper Flight Simulator</h1>
+  <p>Take control of your aircraft. Take off, explore the terrain and practice your landings.</p>
+  <button class="action" id="start">START FLIGHT</button>
+ </div>
+</div>
 
-          document.querySelectorAll(".game-choice").forEach((gameChoice) => {
-            gameChoice.setAttribute("aria-pressed", String(gameChoice === choice));
-          });
-        });
-      });
+<div id="crash" class="hidden">
+ <div class="card">
+  <h1>AIRCRAFT CRASHED</h1>
+  <p id="crashReason">Your aircraft was damaged.</p>
+  <button class="action" id="restart">RESTART FLIGHT</button>
+ </div>
+</div>
 
-      fullscreenButton.addEventListener("click", async () => {
-        try {
-          if (document.fullscreenElement === gameFrame) {
-            await document.exitFullscreen();
-          } else {
-            await gameFrame.requestFullscreen();
-          }
-          fullscreenStatus.hidden = true;
-          fullscreenStatus.textContent = "";
-        } catch {
-          fullscreenStatus.textContent = "Fullscreen is unavailable in this browser.";
-          fullscreenStatus.hidden = false;
-        }
-      });
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js";
 
-      document.addEventListener("fullscreenchange", () => {
-        fullscreenButton.textContent =
-          document.fullscreenElement === gameFrame ? "Exit fullscreen" : "Fullscreen";
-      });
-    </script>
-  </body>
+// SCENE
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87bce5);
+scene.fog=new THREE.Fog(0x87bce5,1500,7500);
+
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,10000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xc9e8ff,0x52643b,2));
+
+const sun=new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(-400,900,300);
+scene.add(sun);
+
+// MATERIALS
+
+const material=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+
+const asphalt=material(0x343a40);
+const concrete=material(0x858b90);
+const white=material(0xffffff);
+const yellow=material(0xf5cb45);
+const blue=material(0x286ca6,.5);
+const glass=material(0x4389a9,.2);
+const metal=material(0xc3ccd2,.45);
+const black=material(0x17232c);
+
+function box(parent,x,y,z,sx,sy,sz,mat){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
+ m.position.set(x,y,z);
+ parent.add(m);
+ return m;
+}
+
+// TERRAIN
+
+function terrainHeight(x,z){
+ const d=Math.hypot(x,z);
+ if(d<850)return 0;
+ return Math.sin(x*.002)*25+
+ Math.cos(z*.0025)*32+
+ Math.sin((x+z)*.0015)*18+
+ Math.max(0,d-850)*.035;
+}
+
+const terrain=new THREE.PlaneGeometry(6000,6000,120,120);
+terrain.rotateX(-Math.PI/2);
+const positions=terrain.attributes.position;
+const colors=[];
+
+for(let i=0;i<positions.count;i++){
+ const x=positions.getX(i),z=positions.getZ(i);
+ const h=terrainHeight(x,z);
+ positions.setY(i,h);
+ const c=Math.sin(x*.015)*Math.cos(z*.013);
+ const color=h>35?new THREE.Color(0x827c57):
+ c<-.25?new THREE.Color(0x365f37):
+ new THREE.Color(0x527b40);
+ colors.push(color.r,color.g,color.b);
+}
+
+terrain.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+terrain.computeVertexNormals();
+
+const ground=new THREE.Mesh(terrain,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
+scene.add(ground);
+
+// AIRPORT
+
+box(scene,0,.15,0,85,.3,1600,asphalt);
+
+for(let z=-750;z<=750;z+=90)box(scene,0,.32,z,2,.06,40,white);
+
+box(scene,-39,.32,0,1,.06,1580,white);
+box(scene,39,.32,0,1,.06,1580,white);
+
+for(let i=-3;i<=3;i++){
+ box(scene,i*9,.35,-735,4,.07,45,white);
+ box(scene,i*9,.35,735,4,.07,45,white);
+}
+
+box(scene,115,.12,0,35,.25,1250,asphalt);
+box(scene,115,.27,0,.8,.05,1200,yellow);
+box(scene,58,.13,0,115,.25,18,asphalt);
+box(scene,185,.15,0,100,.3,500,concrete);
+box(scene,200,13,0,130,26,180,concrete);
+box(scene,200,27,0,140,2,190,asphalt);
+
+for(let z=-70;z<=70;z+=25)box(scene,132,13,z,2,15,18,glass);
+
+for(let i=0;i<4;i++){
+ const z=-250+i*150;
+ box(scene,300,13,z,100,26,90,concrete);
+ box(scene,300,27,z,105,2,95,asphalt);
+}
+
+box(scene,290,30,-130,15,60,15,concrete);
+box(scene,290,63,-130,30,9,30,glass);
+
+// TREES
+
+const trunkMat=material(0x65432a);
+const leavesMat=material(0x315d32);
+
+for(let i=0;i<350;i++){
+ const x=(Math.random()-.5)*4200;
+ const z=(Math.random()-.5)*4200;
+ if(Math.abs(x)<420&&Math.abs(z)<850)continue;
+
+ const h=terrainHeight(x,z);
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(1,1.5,9,6),trunkMat);
+ trunk.position.set(x,h+4,z);
+ scene.add(trunk);
+
+ const leaves=new THREE.Mesh(new THREE.ConeGeometry(7,20,7),leavesMat);
+ leaves.position.set(x,h+15,z);
+ scene.add(leaves);
+}
+
+// AIRCRAFT
+
+const plane=new THREE.Group();
+scene.add(plane);
+
+const fuselage=new THREE.Mesh(
+ new THREE.CylinderGeometry(1.05,1.4,19,16),blue
+);
+fuselage.rotation.x=Math.PI/2;
+plane.add(fuselage);
+
+const nose=new THREE.Mesh(new THREE.ConeGeometry(1.05,5,16),blue);
+nose.rotation.x=-Math.PI/2;
+nose.position.z=-12;
+plane.add(nose);
+
+// WINGS
+
+const wingShape=new THREE.Shape();
+wingShape.moveTo(-1.3,-2);
+wingShape.lineTo(-1.3,2);
+wingShape.lineTo(-18,1.1);
+wingShape.lineTo(-18,-.5);
+wingShape.lineTo(-5,-2);
+wingShape.closePath();
+
+const wingGeometry=new THREE.ExtrudeGeometry(wingShape,{
+ depth:.32,bevelEnabled:true,bevelSegments:2,
+ bevelSize:.12,bevelThickness:.08
+});
+
+const wing=new THREE.Mesh(wingGeometry,metal);
+wing.rotation.x=Math.PI/2;
+plane.add(wing);
+
+const wing2=new THREE.Mesh(wingGeometry,metal);
+wing2.scale.x=-1;
+wing2.rotation.x=Math.PI/2;
+plane.add(wing2);
+
+box(plane,0,0,9,12,.35,2.6,metal);
+
+const fin=new THREE.Mesh(new THREE.BoxGeometry(.45,4,3),blue);
+fin.position.set(0,2,9);
+plane.add(fin);
+
+const cockpit=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),glass);
+cockpit.scale.set(1.05,.8,3.4);
+cockpit.position.set(0,1,-4.5);
+plane.add(cockpit);
+
+const propeller=new THREE.Group();
+propeller.position.z=-15;
+plane.add(propeller);
+box(propeller,0,0,0,.45,8,.3,black);
+box(propeller,0,0,0,8,.45,.3,black);
+
+// LANDING GEAR
+
+for(const x of [-2.3,2.3]){
+ const leg=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,2,8),metal);
+ leg.position.set(x,-1.5,5);
+ plane.add(leg);
+
+ const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.65,.65,.35,16),black);
+ wheel.rotation.z=Math.PI/2;
+ wheel.position.set(x,-2.4,5);
+ plane.add(wheel);
+}
+
+const tailWheel=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.25,12),black);
+tailWheel.rotation.z=Math.PI/2;
+tailWheel.position.set(0,-1.8,10);
+plane.add(tailWheel);
+
+// FLIGHT STATE
+
+let position=new THREE.Vector3(0,2,580);
+let heading=0,pitch=0,bank=0,speed=0,throttle=0,verticalSpeed=0;
+let started=false,crashed=false,cameraMode=0;
+let hasTakenOff=false;
+
+const keys={};
+
+window.addEventListener("keydown",e=>{
+ keys[e.code]=true;
+ if(e.code==="Space")e.preventDefault();
+ if(e.repeat)return;
+ if(e.code==="KeyC")changeCamera();
+ if(e.code==="KeyR")resetPlane();
+});
+
+window.addEventListener("keyup",e=>keys[e.code]=false);
+
+function changeCamera(){
+ cameraMode=(cameraMode+1)%3;
+ document.getElementById("camera").textContent=
+ "POV: "+["CHASE","COCKPIT","WING"][cameraMode]+" (C)";
+}
+
+document.getElementById("camera").onclick=changeCamera;
+
+document.getElementById("start").onclick=()=>{
+ started=true;
+ document.getElementById("menu").classList.add("hidden");
+};
+
+function resetPlane(){
+ position.set(0,2,580);
+ heading=0;
+ pitch=0;
+ bank=0;
+ speed=0;
+ throttle=0;
+ verticalSpeed=0;
+ hasTakenOff=false;
+ crashed=false;
+
+ document.getElementById("powerSlider").value=0;
+ document.getElementById("power").textContent="0%";
+ document.getElementById("crash").classList.add("hidden");
+ document.getElementById("status").textContent="AIRCRAFT PARKED";
+
+ plane.visible=true;
+ plane.position.copy(position);
+ plane.rotation.set(0,0,0);
+}
+
+document.getElementById("restart").onclick=resetPlane;
+
+// CRASH SYSTEM
+
+function crash(reason){
+ if(crashed)return;
+
+ crashed=true;
+ speed=0;
+ throttle=0;
+ verticalSpeed=0;
+
+ document.getElementById("powerSlider").value=0;
+ document.getElementById("power").textContent="0%";
+ document.getElementById("status").textContent="CRASHED";
+ document.getElementById("crashReason").textContent=reason;
+ document.getElementById("crash").classList.remove("hidden");
+}
+
+// FLIGHT PHYSICS
+
+function update(dt){
+ if(!started||crashed)return;
+
+ dt=Math.min(dt,.04);
+
+ // THROTTLE
+
+ if(keys.ShiftLeft||keys.ShiftRight)throttle+=25*dt;
+ if(keys.ControlLeft||keys.ControlRight)throttle-=25*dt;
+ throttle=THREE.MathUtils.clamp(throttle,0,100);
+
+ // PITCH
+
+ let pitchInput=0;
+ if(keys.KeyW)pitchInput=1;
+ if(keys.KeyS)pitchInput=-1;
+
+ pitch=THREE.MathUtils.clamp(
+  pitch+pitchInput*dt*.65,-.45,.45
+ );
+
+ if(!pitchInput)pitch=THREE.MathUtils.damp(pitch,0,.18,dt);
+
+ // BANK
+
+ let bankInput=0;
+ if(keys.KeyD)bankInput=1;
+ if(keys.KeyA)bankInput=-1;
+
+ bank=THREE.MathUtils.damp(bank,bankInput*.65,2.2,dt);
+
+ // RUDDER
+
+ let rudder=0;
+ if(keys.KeyQ)rudder=1;
+ if(keys.KeyE)rudder=-1;
+
+ // GROUND DETECTION
+
+ const groundY=terrainHeight(position.x,position.z)+2;
+ const onGround=position.y<=groundY+.05;
+
+ // BRAKES ONLY WORK ON THE GROUND
+
+ const braking=onGround&&keys.Space;
+
+ // ENGINE
+
+ const enginePower=throttle/100;
+ const drag=.004*speed*speed;
+ const acceleration=enginePower*12-drag-(braking?speed*1.8:0);
+
+ speed=Math.max(0,Math.min(125,speed+acceleration*dt));
+
+ // LIFT AND PITCH
+
+ const airspeed=speed;
+ const liftFactor=THREE.MathUtils.clamp((airspeed-12)/55,0,1.4);
+ const lift=liftFactor*airspeed*.30;
+ const climbForce=Math.sin(pitch)*airspeed*.85;
+
+ const verticalAcceleration=climbForce+lift*.16-1.8;
+ verticalSpeed+=(verticalAcceleration-verticalSpeed*.12)*dt;
+
+ // COORDINATED TURNS
+
+ const turnRate=Math.sin(bank)*Math.min(airspeed/35,1.5)*.65;
+ heading-=turnRate*dt;
+ heading+=rudder*.35*dt*Math.min(airspeed/25,1);
+
+ // AIRCRAFT ROTATION AND FORWARD DIRECTION
+
+ plane.rotation.order="YXZ";
+ plane.rotation.set(pitch,heading,-bank);
+
+ const forward=new THREE.Vector3(0,0,-1);
+ forward.applyEuler(plane.rotation);
+ forward.normalize();
+
+ // MOVEMENT
+
+ position.x+=forward.x*airspeed*dt;
+ position.z+=forward.z*airspeed*dt;
+ position.y+=verticalSpeed*dt;
+
+ // GROUND CONTACT
+ // Taxiing is allowed before takeoff. After takeoff, ANY ground
+ // contact causes a crash, including a gentle landing.
+
+ const newGround=terrainHeight(position.x,position.z)+2;
+
+ if(position.y>newGround+.5){
+  hasTakenOff=true;
+ }
+
+ if(position.y<=newGround){
+
+  if(hasTakenOff){
+   crash("The aircraft struck the ground. Flight ended.");
+   return;
+  }
+
+  // Allow the aircraft to start and taxi on the runway.
+  position.y=newGround;
+  verticalSpeed=0;
+
+  pitch=THREE.MathUtils.damp(pitch,0,5,dt);
+  bank=THREE.MathUtils.damp(bank,0,4,dt);
+ }
+
+ // UPDATE AIRCRAFT
+
+ plane.position.copy(position);
+
+ propeller.rotation.z-=airspeed*.4*dt+enginePower*30*dt;
+
+ // INSTRUMENTS
+
+ const altitude=Math.max(0,position.y-newGround);
+
+ document.getElementById("speed").textContent=Math.round(speed*1.943);
+ document.getElementById("altitude").textContent=Math.round(altitude*3.281);
+ document.getElementById("vertical").textContent=Math.round(verticalSpeed*196.85);
+ document.getElementById("power").textContent=Math.round(throttle)+"%";
+
+ document.getElementById("hdg").textContent=
+ String(Math.round((heading*180/Math.PI+360)%360)).padStart(3,"0")+"°";
+
+ document.getElementById("powerSlider").value=throttle;
+
+ document.getElementById("status").textContent=
+ altitude>3?"AIRBORNE":speed>8?"TAXIING":"PARKED";
+}
+
+// CAMERA
+
+function updateCamera(){
+ const forward=new THREE.Vector3(
+  -Math.sin(heading),0,-Math.cos(heading)
+ );
+
+ if(cameraMode===0){
+  camera.position.copy(position).add(
+   new THREE.Vector3(-forward.x*45,15,-forward.z*45)
+  );
+  camera.lookAt(position.clone().addScaledVector(forward,15));
+ }
+
+ if(cameraMode===1){
+  const p=position.clone().add(new THREE.Vector3(0,1.5,0));
+  p.addScaledVector(forward,1);
+
+  camera.position.copy(p);
+  camera.rotation.order="YXZ";
+  camera.rotation.set(pitch,heading,0);
+ }
+
+ if(cameraMode===2){
+  const p=position.clone();
+  p.x+=12*Math.cos(heading);
+  p.z+=12*Math.sin(heading);
+  p.y+=3;
+
+  camera.position.copy(p);
+  camera.lookAt(position.clone().addScaledVector(forward,40));
+ }
+}
+
+// CLOUDS
+
+const cloudMat=material(0xffffff);
+
+for(let i=0;i<35;i++){
+ const cloud=new THREE.Group();
+
+ for(let j=0;j<5;j++){
+  const puff=new THREE.Mesh(
+   new THREE.SphereGeometry(18+Math.random()*13,10,8),
+   cloudMat
+  );
+  puff.position.set(j*17,Math.random()*8,Math.random()*8);
+  puff.scale.y=.65;
+  cloud.add(puff);
+ }
+
+ cloud.position.set(
+  (Math.random()-.5)*4500,
+  180+Math.random()*220,
+  (Math.random()-.5)*4500
+ );
+
+ scene.add(cloud);
+}
+
+// THROTTLE
+
+document.getElementById("powerSlider").addEventListener("input",e=>{
+ throttle=Number(e.target.value);
+});
+
+// LOOP
+
+const clock=new THREE.Clock();
+
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=clock.getDelta();
+
+ update(dt);
+
+ if(started)updateCamera();
+
+ renderer.render(scene,camera);
+}
+
+camera.position.set(0,20,650);
+animate();
+
+// RESIZE
+
+window.addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
 </html>
