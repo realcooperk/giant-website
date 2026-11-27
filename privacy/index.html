@@ -64,11 +64,13 @@
           permissions and redirects back to the dashboard. The dashboard
           exchanges the authorization code with Discord to verify your account
           and retrieve your profile and server list. The resulting Discord
-          access token is kept in browser memory and sent over HTTPS to Giant's
-          bot API when you request security settings or case actions. The bot
-          API checks the token with Discord and verifies that you own the
-          server or have Administrator or Manage Server permission. The token
-          is not saved in browser storage or the bot database.
+          access token is kept in this tab's session storage so sign-in can
+          survive page navigation and reloads. It is sent over HTTPS to
+          Giant's bot API when you request security settings or case actions.
+          The bot API checks the token with Discord and verifies that you own
+          the server or have Administrator or Manage Server permission. The
+          token is cleared when you sign out or close the tab; it is not saved
+          in persistent browser storage or the bot database.
         </p>
       </section>
       <section>
@@ -99,9 +101,9 @@
       <section>
         <h2>6. Cookies and similar storage</h2>
         <p>
-          The dashboard keeps the Discord access token in browser memory only
-          for the current page session; it does not persist the token in
-          localStorage or sessionStorage. Discord and hosting or other
+          The dashboard keeps its Discord sign-in session in sessionStorage for
+          the current tab so it remains available across page navigation and
+          reloads. It does not persist the token in localStorage. Discord and hosting or other
           third-party services may use their own technologies when you visit
           or interact with them; their practices are governed by their own
           policies.

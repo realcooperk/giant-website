@@ -53,15 +53,13 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "Method not allowed." }, 405, allowedOrigin);
   }
 
-  const clientId = Deno.env.get("DISCORD_CLIENT_ID");
-  const clientSecret = Deno.env.get("DISCORD_CLIENT_SECRET");
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
-  if (!clientId || !clientSecret || !botToken) {
-    console.error("Dashboard function is missing one or more Discord secrets.");
+  if (!botToken) {
+    console.error("Dashboard function is missing the Discord bot token.");
     return jsonResponse({ error: "The dashboard service is not configured." }, 500, allowedOrigin);
   }
 
-  let body: { code?: unknown; redirect_uri?: unknown };
+  let body: { code?: unknown; redirect_uri?: unknown; access_token?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -69,46 +67,86 @@ Deno.serve(async (request) => {
   }
 
   const redirectUri = allowedOrigin;
+  const restoringSession =
+    typeof body.access_token === "string" && body.code === undefined;
   if (
-    typeof body.code !== "string" ||
-    body.code.length < 1 ||
-    body.code.length > 2048 ||
-    body.redirect_uri !== redirectUri
+    typeof body.access_token === "string" &&
+    body.code === undefined &&
+    body.access_token.length > 4096
+  ) {
+    return jsonResponse({ error: "The Discord session is invalid." }, 400, allowedOrigin);
+  }
+  if (
+    !restoringSession &&
+    (typeof body.code !== "string" ||
+      body.code.length < 1 ||
+      body.code.length > 2048 ||
+      body.redirect_uri !== redirectUri)
   ) {
     return jsonResponse({ error: "The authorization request is invalid." }, 400, allowedOrigin);
   }
 
   try {
-    const tokenResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "authorization_code",
-        code: body.code,
-        redirect_uri: redirectUri,
-      }),
-    });
-    if (!tokenResponse.ok) {
-      console.error(`Discord token exchange failed (${tokenResponse.status}).`);
-      return jsonResponse(
-        { error: "Discord sign-in expired or could not be completed. Please sign in again." },
-        401,
-        allowedOrigin,
-      );
-    }
+    let accessToken = "";
+    let expiresIn: number | null = null;
+    if (typeof body.access_token === "string" && body.code === undefined) {
+      accessToken = body.access_token;
+    } else {
+      const clientId = Deno.env.get("DISCORD_CLIENT_ID");
+      const clientSecret = Deno.env.get("DISCORD_CLIENT_SECRET");
+      if (!clientId || !clientSecret) {
+        console.error("Dashboard function is missing Discord OAuth client secrets.");
+        return jsonResponse(
+          { error: "The dashboard service is not configured." },
+          500,
+          allowedOrigin,
+        );
+      }
 
-    const tokenData = await tokenResponse.json();
-    if (typeof tokenData.access_token !== "string") {
-      console.error("Discord token exchange returned no access token.");
-      return jsonResponse({ error: "Discord sign-in could not be completed." }, 502, allowedOrigin);
+      const tokenResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: "authorization_code",
+          code: body.code as string,
+          redirect_uri: redirectUri,
+        }),
+      });
+      if (!tokenResponse.ok) {
+        console.error(`Discord token exchange failed (${tokenResponse.status}).`);
+        return jsonResponse(
+          { error: "Discord sign-in expired or could not be completed. Please sign in again." },
+          401,
+          allowedOrigin,
+        );
+      }
+
+      const tokenData = await tokenResponse.json();
+      if (
+        typeof tokenData.access_token !== "string" ||
+        !Number.isSafeInteger(tokenData.expires_in) ||
+        tokenData.expires_in <= 0
+      ) {
+        console.error("Discord token exchange returned invalid session data.");
+        return jsonResponse({ error: "Discord sign-in could not be completed." }, 502, allowedOrigin);
+      }
+      accessToken = tokenData.access_token;
+      expiresIn = tokenData.expires_in;
     }
-    const userHeaders = { Authorization: `Bearer ${tokenData.access_token}` };
+    const userHeaders = { Authorization: `Bearer ${accessToken}` };
 
     const userResponse = await fetch("https://discord.com/api/v10/users/@me", {
       headers: userHeaders,
     });
+    if (userResponse.status === 401) {
+      return jsonResponse(
+        { error: "Your Discord session expired. Please sign in again." },
+        401,
+        allowedOrigin,
+      );
+    }
     if (!userResponse.ok) {
       console.error(`Discord user request failed (${userResponse.status}).`);
       return jsonResponse({ error: "Could not load your Discord profile." }, 502, allowedOrigin);
@@ -127,6 +165,13 @@ Deno.serve(async (request) => {
       if (after) guildsUrl.searchParams.set("after", after);
 
       const guildsResponse = await fetch(guildsUrl, { headers: userHeaders });
+      if (guildsResponse.status === 401) {
+        return jsonResponse(
+          { error: "Your Discord session expired. Please sign in again." },
+          401,
+          allowedOrigin,
+        );
+      }
       if (!guildsResponse.ok) {
         console.error(`Discord guild request failed (${guildsResponse.status}).`);
         return jsonResponse({ error: "Could not load your Discord servers." }, 502, allowedOrigin);
@@ -184,7 +229,8 @@ Deno.serve(async (request) => {
           avatar: user.avatar ?? null,
         },
         guilds: results,
-        access_token: tokenData.access_token,
+        access_token: accessToken,
+        expires_in: expiresIn,
       },
       200,
       allowedOrigin,

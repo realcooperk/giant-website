@@ -28,6 +28,7 @@
 
   const applicationId = "1385271103030689863";
   const stateKey = "giant-dashboard-oauth-state";
+  const sessionKey = "giant-dashboard-session";
   const oauthRedirectUri = window.location.origin;
   const endpointUrl = (() => {
     try {
@@ -52,7 +53,28 @@
     }
     return "";
   })();
-  let dashboardAccessToken = "";
+  const readDashboardSession = () => {
+    try {
+      const session = JSON.parse(sessionStorage.getItem(sessionKey) ?? "null");
+      if (
+        !session ||
+        typeof session.accessToken !== "string" ||
+        !session.accessToken ||
+        !session.user ||
+        typeof session.user.id !== "string" ||
+        typeof session.user.username !== "string" ||
+        !Number.isFinite(session.expiresAt) ||
+        session.expiresAt <= Date.now()
+      ) {
+        sessionStorage.removeItem(sessionKey);
+        return null;
+      }
+      return session;
+    } catch {
+      return null;
+    }
+  };
+  let dashboardAccessToken = readDashboardSession()?.accessToken ?? "";
 
   const requestBotApi = async (payload) => {
     if (!botApiUrl) {
@@ -88,6 +110,7 @@
 
   const clearDashboard = () => {
     dashboardAccessToken = "";
+    sessionStorage.removeItem(sessionKey);
     userSection.hidden = true;
     serverSection.hidden = true;
     serverList.replaceChildren();
@@ -538,7 +561,24 @@
     return card;
   };
 
-  const showDashboard = (result) => {
+  const showDashboard = (result, previousExpiresAt = null) => {
+    const expiresAt = Number.isFinite(result.expires_in)
+      ? Date.now() + result.expires_in * 1000
+      : previousExpiresAt;
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      throw new Error("Your Discord session expired. Please sign in again.");
+    }
+
+    const user = {
+      id: result.user.id,
+      username: result.user.username,
+      global_name: result.user.global_name ?? null,
+      avatar: result.user.avatar ?? null,
+    };
+    sessionStorage.setItem(
+      sessionKey,
+      JSON.stringify({ accessToken: result.access_token, user, expiresAt }),
+    );
     dashboardAccessToken = result.access_token;
     const guilds = Array.isArray(result.guilds)
       ? result.guilds.filter(
@@ -550,9 +590,15 @@
         )
       : [];
 
-    userName.textContent = result.user?.global_name || result.user?.username || "Discord user";
-    if (typeof result.user?.id === "string" && typeof result.user?.avatar === "string") {
+    userName.textContent = user.global_name || user.username || "Discord user";
+    if (
+      /^[0-9]{5,25}$/.test(user.id) &&
+      typeof user.avatar === "string" &&
+      /^[A-Za-z0-9_]+$/.test(user.avatar)
+    ) {
       userAvatar.src = `https://cdn.discordapp.com/avatars/${result.user.id}/${result.user.avatar}.webp?size=96`;
+    } else {
+      userAvatar.src = "/giant-logo.png";
     }
     userSection.hidden = false;
     loginSection.hidden = true;
@@ -567,7 +613,7 @@
     );
   };
 
-  const loadDashboard = async (code) => {
+  const loadDashboard = async (credentials, previousExpiresAt = null) => {
     if (!endpointUrl) {
       throw new Error("The dashboard API is not configured. Please contact the Giant team.");
     }
@@ -578,7 +624,7 @@
         apikey: config.supabaseAnonKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code, redirect_uri: oauthRedirectUri }),
+      body: JSON.stringify(credentials),
     });
 
     let result;
@@ -588,7 +634,11 @@
       throw new Error("The dashboard API returned an invalid response.");
     }
     if (!response.ok) {
-      throw new Error(result.error || `Dashboard request failed (${response.status}).`);
+      const error = new Error(
+        result.error || `Dashboard request failed (${response.status}).`,
+      );
+      error.status = response.status;
+      throw error;
     }
     if (
       !result.user ||
@@ -598,7 +648,22 @@
       throw new Error("The dashboard API returned incomplete server data.");
     }
 
-    showDashboard(result);
+    showDashboard(result, previousExpiresAt);
+  };
+
+  const handleDashboardError = (error) => {
+    console.error("Could not load the dashboard:", error);
+    if (error.status === 401) {
+      clearDashboard();
+      loginSection.hidden = false;
+      setStatus("Your Discord session expired. Please sign in again.", true);
+      return;
+    }
+    const message =
+      error instanceof TypeError
+        ? "Could not reach the dashboard service. Deploy the Supabase dashboard function and set DASHBOARD_ORIGIN to https://giant-bot.xyz."
+        : error.message || "Could not load your servers. Please try again.";
+    setStatus(message, true);
   };
 
   const startLogin = () => {
@@ -633,7 +698,36 @@
   const callbackParams = new URLSearchParams(window.location.search);
   const authorizationCode = callbackParams.get("code");
   const authorizationError = callbackParams.get("error");
-  if (!authorizationCode && !authorizationError) return;
+  if (!authorizationCode && !authorizationError) {
+    const savedSession = readDashboardSession();
+    if (!savedSession) return;
+
+    dashboardAccessToken = savedSession.accessToken;
+    userName.textContent =
+      savedSession.user.global_name || savedSession.user.username || "Discord user";
+    if (
+      /^[0-9]{5,25}$/.test(savedSession.user.id) &&
+      typeof savedSession.user.avatar === "string" &&
+      /^[A-Za-z0-9_]+$/.test(savedSession.user.avatar)
+    ) {
+      userAvatar.src = `https://cdn.discordapp.com/avatars/${savedSession.user.id}/${savedSession.user.avatar}.webp?size=96`;
+    } else {
+      userAvatar.src = "/giant-logo.png";
+    }
+    userSection.hidden = false;
+    loginSection.hidden = true;
+    loginButton.disabled = true;
+    setStatus("Restoring your dashboard...");
+    loadDashboard(
+      { access_token: savedSession.accessToken },
+      savedSession.expiresAt,
+    )
+      .catch(handleDashboardError)
+      .finally(() => {
+        loginButton.disabled = false;
+      });
+    return;
+  }
 
   const authorizationState = callbackParams.get("state");
   const issuer = callbackParams.get("iss");
@@ -653,18 +747,14 @@
     setStatus("Discord did not return an authorization code. Please try again.", true);
   } else {
     loginButton.disabled = true;
-    setStatus("Loading your administrator servers...");
-    loadDashboard(authorizationCode)
-      .catch((error) => {
-        console.error("Could not load the dashboard:", error);
-        const message =
-          error instanceof TypeError
-            ? "Could not reach the dashboard service. Deploy the Supabase dashboard function and set DASHBOARD_ORIGIN to https://giant-bot.xyz."
-            : error.message || "Could not load your servers. Please try again.";
-        setStatus(message, true);
-      })
+    setStatus("Loading your servers...");
+    loadDashboard(
+      { code: authorizationCode, redirect_uri: oauthRedirectUri },
+    )
+      .catch(handleDashboardError)
       .finally(() => {
         loginButton.disabled = false;
       });
   }
+
 })();

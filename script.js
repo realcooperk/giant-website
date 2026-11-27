@@ -5,16 +5,71 @@ const giantStats = {
 };
 
 const numberFormatter = new Intl.NumberFormat("en-US");
+const dashboardSessionKey = "giant-dashboard-session";
+
+const readDashboardSession = () => {
+  try {
+    const session = JSON.parse(sessionStorage.getItem(dashboardSessionKey) ?? "null");
+    if (
+      !session ||
+      typeof session.accessToken !== "string" ||
+      !session.accessToken ||
+      !Number.isFinite(session.expiresAt) ||
+      session.expiresAt <= Date.now() ||
+      !session.user ||
+      typeof session.user.id !== "string"
+    ) {
+      sessionStorage.removeItem(dashboardSessionKey);
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+};
 
 const dashboardLoginLink = document.querySelector(".header-login");
 if (dashboardLoginLink) {
+  const discordAuthorizeHref = dashboardLoginLink.href;
+  const savedSession = readDashboardSession();
+  if (savedSession) {
+    const avatar = document.createElement("img");
+    avatar.className = "header-account-avatar";
+    avatar.alt = "";
+    if (
+      /^[0-9]{5,25}$/.test(savedSession.user.id) &&
+      typeof savedSession.user.avatar === "string" &&
+      /^[A-Za-z0-9_]+$/.test(savedSession.user.avatar)
+    ) {
+      avatar.src = `https://cdn.discordapp.com/avatars/${savedSession.user.id}/${savedSession.user.avatar}.webp?size=64`;
+    } else {
+      avatar.src = "giant-logo.png";
+    }
+    avatar.addEventListener(
+      "error",
+      () => {
+        avatar.src = "giant-logo.png";
+      },
+      { once: true },
+    );
+    const dashboardLabel = document.createElement("span");
+    dashboardLabel.textContent = "Dashboard";
+    const displayName =
+      savedSession.user.global_name || savedSession.user.username || "Discord user";
+    dashboardLoginLink.href = "/dashboard/";
+    dashboardLoginLink.classList.add("header-login-dashboard");
+    dashboardLoginLink.setAttribute("aria-label", `Open dashboard for ${displayName}`);
+    dashboardLoginLink.replaceChildren(avatar, dashboardLabel);
+  }
+
   dashboardLoginLink.addEventListener("click", (event) => {
+    if (readDashboardSession()) return;
     event.preventDefault();
     const bytes = crypto.getRandomValues(new Uint8Array(32));
     const stateValue = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
     sessionStorage.setItem("giant-dashboard-oauth-state", stateValue);
 
-    const authorizeUrl = new URL(dashboardLoginLink.href);
+    const authorizeUrl = new URL(discordAuthorizeHref);
     authorizeUrl.searchParams.set("state", stateValue);
     window.location.assign(authorizeUrl.href);
   });
