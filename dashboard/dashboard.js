@@ -615,7 +615,7 @@
     authorizeUrl.searchParams.set("client_id", applicationId);
     authorizeUrl.searchParams.set("response_type", "code");
     authorizeUrl.searchParams.set("redirect_uri", oauthRedirectUri);
-    authorizeUrl.searchParams.set("scope", "identify email guilds");
+    authorizeUrl.searchParams.set("scope", "identify guilds");
     authorizeUrl.searchParams.set("state", stateValue);
     window.location.assign(authorizeUrl.href);
   };
