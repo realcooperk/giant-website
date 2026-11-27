@@ -3,4 +3,6 @@
 window.GIANT_DIRECTORY_CONFIG = {
   supabaseUrl: "https://xmgryoegbzyxulimmaed.supabase.co",
   supabaseAnonKey: "sb_publishable_apYoVs_WJ0Y0hubbtE0w7Q_AjjSooQp",
+  // Set this to the public HTTPS endpoint described in Giant/DASHBOARD-API-SETUP.md.
+  botApiUrl: "",
 };

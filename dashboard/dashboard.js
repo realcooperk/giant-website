@@ -38,6 +38,48 @@
       return null;
     }
   })();
+  const botApiUrl = (() => {
+    try {
+      const url = new URL(config.botApiUrl);
+      if (
+        url.protocol === "https:" ||
+        (url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname))
+      ) {
+        return url.href.replace(/\/+$/, "");
+      }
+    } catch {
+      return "";
+    }
+    return "";
+  })();
+  let dashboardAccessToken = "";
+
+  const requestBotApi = async (payload) => {
+    if (!botApiUrl) {
+      throw new Error("The Giant security API is not configured yet.");
+    }
+    if (!dashboardAccessToken) {
+      throw new Error("Your Discord session is missing. Sign in again.");
+    }
+    const response = await fetch(botApiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dashboardAccessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("The Giant security API returned an invalid response.");
+    }
+    if (!response.ok) {
+      throw new Error(result.error || `Security API request failed (${response.status}).`);
+    }
+    return result;
+  };
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
@@ -45,12 +87,374 @@
   };
 
   const clearDashboard = () => {
+    dashboardAccessToken = "";
     userSection.hidden = true;
     serverSection.hidden = true;
     serverList.replaceChildren();
     serverCount.textContent = "";
     userName.textContent = "";
     userAvatar.src = "/giant-logo.png";
+  };
+
+  const defaultSecuritySettings = {
+    enabled: false,
+    logChannel: "",
+    rules: {
+      spam: true,
+      invites: true,
+      mentions: true,
+      repeats: true,
+      raids: true,
+    },
+    spamCount: 5,
+    spamWindow: 8,
+    raidJoins: 8,
+    raidWindow: 10,
+    raidDuration: 5,
+    warnAt: 1,
+    timeoutAt: 2,
+    banAt: 4,
+  };
+
+  const makeToggle = (label, name, checked) => {
+    const wrapper = document.createElement("label");
+    wrapper.className = "dashboard-security-toggle";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = name;
+    input.checked = checked;
+    const track = document.createElement("span");
+    track.className = "dashboard-security-toggle-track";
+    track.setAttribute("aria-hidden", "true");
+    const text = document.createElement("span");
+    text.textContent = label;
+    wrapper.append(input, track, text);
+    return wrapper;
+  };
+
+  const makeNumberField = (label, name, value, min, max, unit = "") => {
+    const field = document.createElement("label");
+    field.className = "dashboard-security-field";
+    const caption = document.createElement("span");
+    caption.textContent = label;
+    const input = document.createElement("input");
+    input.type = "number";
+    input.name = name;
+    input.value = String(value);
+    input.min = String(min);
+    input.max = String(max);
+    if (unit) input.setAttribute("aria-label", `${label} (${unit})`);
+    field.append(caption, input);
+    if (unit) {
+      const suffix = document.createElement("small");
+      suffix.textContent = unit;
+      field.append(suffix);
+    }
+    return field;
+  };
+
+  const makeSecuritySettings = (guild) => {
+    const settings = {
+      ...defaultSecuritySettings,
+      rules: { ...defaultSecuritySettings.rules },
+    };
+    const panel = document.createElement("div");
+    panel.className = "dashboard-security-settings";
+
+    const heading = document.createElement("div");
+    heading.className = "dashboard-security-heading";
+    const headingCopy = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = "Security";
+    const subtitle = document.createElement("p");
+    subtitle.textContent = "Detection rules and escalations for this server.";
+    headingCopy.append(title, subtitle);
+    heading.append(headingCopy, makeToggle("Protection enabled", "enabled", settings.enabled));
+
+    const form = document.createElement("form");
+    form.className = "dashboard-security-form";
+
+    const logField = document.createElement("label");
+    logField.className = "dashboard-security-field dashboard-security-log-field";
+    const logCaption = document.createElement("span");
+    logCaption.textContent = "Security log channel";
+    const logInput = document.createElement("input");
+    logInput.type = "text";
+    logInput.name = "logChannel";
+    logInput.placeholder = "Channel ID or leave blank";
+    logInput.value = settings.logChannel;
+    logField.append(logCaption, logInput);
+
+    const rulesTitle = document.createElement("h4");
+    rulesTitle.textContent = "Detection rules";
+    const ruleGrid = document.createElement("div");
+    ruleGrid.className = "dashboard-security-rule-grid";
+    ruleGrid.append(
+      makeToggle("Spam", "ruleSpam", settings.rules.spam),
+      makeToggle("Invite links", "ruleInvites", settings.rules.invites),
+      makeToggle("Mention spam", "ruleMentions", settings.rules.mentions),
+      makeToggle("Repeated messages", "ruleRepeats", settings.rules.repeats),
+      makeToggle("Raid joins", "ruleRaids", settings.rules.raids),
+    );
+
+    const thresholdsTitle = document.createElement("h4");
+    thresholdsTitle.textContent = "Spam threshold";
+    const spamGrid = document.createElement("div");
+    spamGrid.className = "dashboard-security-number-grid";
+    spamGrid.append(
+      makeNumberField("Messages", "spamCount", settings.spamCount, 3, 20),
+      makeNumberField("Window", "spamWindow", settings.spamWindow, 3, 60, "seconds"),
+    );
+
+    const raidTitle = document.createElement("h4");
+    raidTitle.textContent = "Raid mode";
+    const raidGrid = document.createElement("div");
+    raidGrid.className = "dashboard-security-number-grid";
+    raidGrid.append(
+      makeNumberField("Joins", "raidJoins", settings.raidJoins, 3, 100),
+      makeNumberField("Window", "raidWindow", settings.raidWindow, 5, 120, "seconds"),
+      makeNumberField("Duration", "raidDuration", settings.raidDuration, 1, 60, "minutes"),
+    );
+
+    const strikeTitle = document.createElement("h4");
+    strikeTitle.textContent = "Escalating strikes";
+    const strikeGrid = document.createElement("div");
+    strikeGrid.className = "dashboard-security-number-grid";
+    strikeGrid.append(
+      makeNumberField("Warn", "warnAt", settings.warnAt, 1, 10, "strike"),
+      makeNumberField("Timeout", "timeoutAt", settings.timeoutAt, 2, 10, "strikes"),
+      makeNumberField("Ban", "banAt", settings.banAt, 3, 10, "strikes"),
+    );
+
+    const formMessage = document.createElement("p");
+    formMessage.className = "dashboard-security-message";
+    formMessage.setAttribute("role", "status");
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "submit";
+    saveButton.className = "button button-primary dashboard-security-save";
+    saveButton.textContent = "Save security settings";
+
+    form.append(
+      logField,
+      rulesTitle,
+      ruleGrid,
+      thresholdsTitle,
+      spamGrid,
+      raidTitle,
+      raidGrid,
+      strikeTitle,
+      strikeGrid,
+      formMessage,
+      saveButton,
+    );
+
+    const enabledToggle = heading.querySelector('input[name="enabled"]');
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const nextSettings = {
+        enabled: enabledToggle.checked,
+        logChannel: String(data.get("logChannel") ?? "").trim(),
+        rules: {
+          spam: form.elements.namedItem("ruleSpam").checked,
+          invites: form.elements.namedItem("ruleInvites").checked,
+          mentions: form.elements.namedItem("ruleMentions").checked,
+          repeats: form.elements.namedItem("ruleRepeats").checked,
+          raids: form.elements.namedItem("ruleRaids").checked,
+        },
+        spamCount: Number(data.get("spamCount")),
+        spamWindow: Number(data.get("spamWindow")),
+        raidJoins: Number(data.get("raidJoins")),
+        raidWindow: Number(data.get("raidWindow")),
+        raidDuration: Number(data.get("raidDuration")),
+        warnAt: Number(data.get("warnAt")),
+        timeoutAt: Number(data.get("timeoutAt")),
+        banAt: Number(data.get("banAt")),
+      };
+
+      if (!(nextSettings.warnAt < nextSettings.timeoutAt && nextSettings.timeoutAt < nextSettings.banAt)) {
+        formMessage.textContent = "Strike thresholds must increase: warn < timeout < ban.";
+        formMessage.classList.add("is-error");
+        return;
+      }
+
+      formMessage.classList.remove("is-error");
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
+      try {
+        const result = await requestBotApi({
+          guildId: guild.id,
+          action: "save",
+          security: nextSettings,
+        });
+        setSettings(result.settings);
+        settingsLoaded = true;
+        formMessage.textContent = "Security settings saved to Giant.";
+      } catch (error) {
+        console.error("Could not save security settings:", error);
+        formMessage.textContent =
+          error instanceof Error ? error.message : "Could not save security settings.";
+        formMessage.classList.add("is-error");
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = "Save security settings";
+      }
+    });
+
+    const cases = document.createElement("section");
+    cases.className = "dashboard-security-cases";
+    const casesTitle = document.createElement("h4");
+    casesTitle.textContent = "Recent cases";
+    const casesFilter = document.createElement("div");
+    casesFilter.className = "dashboard-security-number-grid";
+    const memberField = document.createElement("label");
+    memberField.className = "dashboard-security-field";
+    const memberCaption = document.createElement("span");
+    memberCaption.textContent = "Member ID";
+    const memberInput = document.createElement("input");
+    memberInput.type = "text";
+    memberInput.inputMode = "numeric";
+    memberInput.placeholder = "Optional";
+    memberField.append(memberCaption, memberInput);
+    const caseField = document.createElement("label");
+    caseField.className = "dashboard-security-field";
+    const caseCaption = document.createElement("span");
+    caseCaption.textContent = "Case";
+    const caseInput = document.createElement("input");
+    caseInput.type = "number";
+    caseInput.min = "1";
+    caseInput.placeholder = "#";
+    caseField.append(caseCaption, caseInput);
+    casesFilter.append(memberField, caseField);
+
+    const caseActions = document.createElement("div");
+    caseActions.className = "dashboard-security-actions";
+    const caseMessage = document.createElement("p");
+    caseMessage.className = "dashboard-security-message";
+    caseMessage.setAttribute("role", "status");
+    const caseList = document.createElement("div");
+    caseList.className = "dashboard-security-case-list";
+    const listCasesButton = document.createElement("button");
+    listCasesButton.type = "button";
+    listCasesButton.className = "button button-outline dashboard-security-case-action";
+    listCasesButton.textContent = "List cases";
+    listCasesButton.addEventListener("click", async () => {
+      try {
+        const result = await requestBotApi({
+          guildId: guild.id,
+          action: "cases",
+          memberId: memberInput.value.trim() || null,
+        });
+        caseList.replaceChildren();
+        if (Array.isArray(result.cases) && result.cases.length) {
+          for (const item of result.cases) {
+            const row = document.createElement("article");
+            row.className = "dashboard-security-case";
+            const title = document.createElement("strong");
+            title.textContent = `#${item.id} · ${item.rule} · ${item.status}`;
+            const description = document.createElement("p");
+            description.textContent = `${item.reason} — ${item.outcome}`;
+            row.append(title, description);
+            caseList.append(row);
+          }
+          caseMessage.textContent = `${result.cases.length} recent ${
+            result.cases.length === 1 ? "case" : "cases"
+          } found.`;
+        } else {
+          caseMessage.textContent = "No security cases found.";
+        }
+        caseMessage.classList.remove("is-error");
+      } catch (error) {
+        caseList.replaceChildren();
+        caseMessage.textContent = error instanceof Error ? error.message : "Could not load cases.";
+        caseMessage.classList.add("is-error");
+      }
+    });
+    const addCaseAction = (label, action) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "button button-outline dashboard-security-case-action";
+      button.textContent = label;
+      button.addEventListener("click", async () => {
+        if (!caseInput.value) {
+          caseMessage.textContent = "Enter a case number.";
+          caseMessage.classList.add("is-error");
+          return;
+        }
+        try {
+          const result = await requestBotApi({
+            guildId: guild.id,
+            action: "case",
+            caseAction: action,
+            caseNumber: Number(caseInput.value),
+          });
+          if (result.case) {
+            caseMessage.textContent = `Case #${caseInput.value} marked ${result.case.status}.`;
+            if (result.message) caseMessage.textContent += ` ${result.message}`;
+            caseList.replaceChildren();
+          }
+          caseMessage.classList.remove("is-error");
+        } catch (error) {
+          caseMessage.textContent = error instanceof Error ? error.message : "Could not update the case.";
+          caseMessage.classList.add("is-error");
+        }
+      });
+      return button;
+    };
+    caseActions.append(
+      listCasesButton,
+      addCaseAction("Review", "review"),
+      addCaseAction("Dismiss", "dismiss"),
+      addCaseAction("Escalate", "escalate"),
+    );
+    cases.append(casesTitle, casesFilter, caseActions, caseMessage, caseList);
+    panel.append(heading, form, cases);
+
+    let settingsLoaded = false;
+    const setSettings = (serverSettings) => {
+      enabledToggle.checked = serverSettings.enabled;
+      logInput.value = serverSettings.logChannel;
+      form.elements.namedItem("ruleSpam").checked = serverSettings.rules.spam;
+      form.elements.namedItem("ruleInvites").checked = serverSettings.rules.invites;
+      form.elements.namedItem("ruleMentions").checked = serverSettings.rules.mentions;
+      form.elements.namedItem("ruleRepeats").checked = serverSettings.rules.repeats;
+      form.elements.namedItem("ruleRaids").checked = serverSettings.rules.raids;
+      for (const name of [
+        "spamCount",
+        "spamWindow",
+        "raidJoins",
+        "raidWindow",
+        "raidDuration",
+        "warnAt",
+        "timeoutAt",
+        "banAt",
+      ]) {
+        form.elements.namedItem(name).value = String(serverSettings[name]);
+      }
+    };
+    const loadSettings = async () => {
+      if (settingsLoaded) return;
+      formMessage.textContent = "Loading server security settings...";
+      try {
+        const result = await requestBotApi({ guildId: guild.id, action: "status" });
+        if (!result.settings || typeof result.settings !== "object") {
+          throw new Error("The Giant security API returned incomplete settings.");
+        }
+        setSettings(result.settings);
+        settingsLoaded = true;
+        formMessage.textContent = "Settings loaded from Giant.";
+        formMessage.classList.remove("is-error");
+      } catch (error) {
+        formMessage.textContent =
+          error instanceof Error ? error.message : "Could not load security settings.";
+        formMessage.classList.add("is-error");
+      }
+    };
+
+    return { element: panel, loadSettings };
   };
 
   const makeServerCard = (guild) => {
@@ -92,11 +496,14 @@
     const details = document.createElement("div");
     details.className = "dashboard-server-details";
     details.hidden = true;
+    let securitySettings = null;
 
     const description = document.createElement("p");
     if (guild.botInstalled) {
       description.textContent =
-        "Giant is in this server. Server settings will be available here soon.";
+        "Giant is in this server. Manage security protection below.";
+      securitySettings = makeSecuritySettings(guild);
+      details.append(description, securitySettings.element);
     } else {
       description.textContent =
         "Giant isn’t in this server yet. Invite it to get started.";
@@ -116,7 +523,6 @@
       invite.textContent = "Invite Giant";
       details.append(description, invite);
     }
-    if (guild.botInstalled) details.append(description);
 
     const detailsId = `server-details-${guild.id}`;
     details.id = detailsId;
@@ -125,6 +531,7 @@
       const expanded = summary.getAttribute("aria-expanded") === "true";
       summary.setAttribute("aria-expanded", String(!expanded));
       details.hidden = expanded;
+      if (!expanded && securitySettings) securitySettings.loadSettings();
     });
 
     card.append(summary, details);
@@ -132,6 +539,7 @@
   };
 
   const showDashboard = (result) => {
+    dashboardAccessToken = result.access_token;
     const guilds = Array.isArray(result.guilds)
       ? result.guilds.filter(
           (guild) =>
@@ -154,8 +562,8 @@
 
     setStatus(
       guilds.length
-        ? "Only servers where you have Administrator permission are shown."
-        : "No servers with Administrator permission were found for this account.",
+        ? "Only servers where you have Administrator or Manage Server permission are shown."
+        : "No servers with Administrator or Manage Server permission were found for this account.",
     );
   };
 
@@ -182,7 +590,11 @@
     if (!response.ok) {
       throw new Error(result.error || `Dashboard request failed (${response.status}).`);
     }
-    if (!result.user || !Array.isArray(result.guilds)) {
+    if (
+      !result.user ||
+      !Array.isArray(result.guilds) ||
+      typeof result.access_token !== "string"
+    ) {
       throw new Error("The dashboard API returned incomplete server data.");
     }
 

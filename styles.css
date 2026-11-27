@@ -1607,6 +1607,216 @@ h2 span {
   padding-inline: 14px;
 }
 
+.dashboard-security-settings {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.dashboard-security-heading,
+.dashboard-security-toggle,
+.dashboard-security-field,
+.dashboard-security-rule-grid,
+.dashboard-security-number-grid,
+.dashboard-security-actions {
+  display: flex;
+}
+
+.dashboard-security-heading {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dashboard-security-heading h3,
+.dashboard-security-settings h4 {
+  margin: 0;
+  color: var(--text);
+}
+
+.dashboard-security-heading h3 {
+  font-size: 16px;
+}
+
+.dashboard-security-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-security-toggle {
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dashboard-security-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dashboard-security-toggle-track {
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: 160ms ease;
+}
+
+.dashboard-security-toggle-track::after {
+  content: "";
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: 160ms ease;
+}
+
+.dashboard-security-toggle input:checked + .dashboard-security-toggle-track {
+  border-color: rgba(93, 219, 176, 0.42);
+  background: rgba(93, 219, 176, 0.22);
+}
+
+.dashboard-security-toggle input:checked + .dashboard-security-toggle-track::after {
+  transform: translateX(16px);
+  background: #8de5c6;
+}
+
+.dashboard-security-form {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-security-field {
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-security-field input {
+  width: 78px;
+  min-height: 38px;
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  font: inherit;
+}
+
+.dashboard-security-field input:focus {
+  border-color: rgba(109, 94, 203, 0.72);
+  outline: none;
+}
+
+.dashboard-security-field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.dashboard-security-log-field {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+
+.dashboard-security-log-field input {
+  width: 100%;
+}
+
+.dashboard-security-rule-grid {
+  flex-wrap: wrap;
+  gap: 14px 18px;
+}
+
+.dashboard-security-number-grid {
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.dashboard-security-settings h4 {
+  margin-top: 2px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-security-message {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-security-message.is-error {
+  color: #ff9aab;
+}
+
+.dashboard-security-save {
+  justify-self: start;
+  margin-top: 0;
+}
+
+.dashboard-security-cases {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.dashboard-security-cases h4 {
+  margin: 0;
+}
+
+.dashboard-security-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-security-case-action {
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.dashboard-security-case-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-security-case {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-security-case strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.dashboard-security-case p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .motion-ready .reveal {
   opacity: 0;
   transform: translateY(18px);
@@ -1894,6 +2104,15 @@ h2 span {
 
   .dashboard-server-details {
     padding-left: 65px;
+  }
+
+  .dashboard-security-heading,
+  .dashboard-security-log-field {
+    align-items: flex-start;
+  }
+
+  .dashboard-security-log-field {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -31,8 +31,13 @@ const jsonResponse = (body: Record<string, unknown>, status: number, origin: str
     },
   });
 
-const hasAdministratorPermission = (guild: DiscordGuild) =>
-  guild.owner === true || (BigInt(guild.permissions) & 8n) !== 0n;
+const hasServerManagementPermission = (guild: DiscordGuild) => {
+  if (guild.owner === true) return true;
+  if (typeof guild.permissions !== "string" || !/^\d+$/.test(guild.permissions)) {
+    return false;
+  }
+  return (BigInt(guild.permissions) & 40n) !== 0n;
+};
 
 Deno.serve(async (request) => {
   const allowedOrigin = Deno.env.get("DASHBOARD_ORIGIN")?.replace(/\/+$/, "");
@@ -144,7 +149,7 @@ Deno.serve(async (request) => {
       after = nextAfter;
     }
 
-    const adminGuilds = userGuilds.filter((guild) => hasAdministratorPermission(guild));
+    const adminGuilds = userGuilds.filter(hasServerManagementPermission);
     const results = [];
     for (let index = 0; index < adminGuilds.length; index += 5) {
       const batch = adminGuilds.slice(index, index + 5);
@@ -179,6 +184,7 @@ Deno.serve(async (request) => {
           avatar: user.avatar ?? null,
         },
         guilds: results,
+        access_token: tokenData.access_token,
       },
       200,
       allowedOrigin,
