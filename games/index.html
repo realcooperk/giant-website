@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -17,6 +18,7 @@
     <header class="polytrack-header games-header">
       <h1>Made by Cooper</h1>
     </header>
+
     <main class="polytrack-main games-main">
       <div class="games-menu" role="group" aria-label="Choose a game">
         <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/poly-track/" data-title="PolyTrack" aria-pressed="false">PolyTrack</button>
@@ -28,8 +30,15 @@
         <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/drift-hunters" data-title="Drift Hunters" aria-pressed="false">Drift Hunters</button>
         <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/flappy-birb" data-title="Flappy Birb" aria-pressed="false">Flappy Birb</button>
         <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/retro-bowl" data-title="Retro Bowl" aria-pressed="false">Retro Bowl</button>
-        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/REAL-FS" data-title="Flight Sim" aria-pressed="false">Flight Sim</button>
+
+        <button class="game-choice" type="button" data-url="https://giant-bot.xyz/games/flight-sim.html" data-title="Flight Sim 1" aria-pressed="false">Flight Sim 1</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/REAL-FS" data-title="Flight Sim 2" aria-pressed="false">Flight Sim 2</button>
+
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/bit-planes/" data-title="Bit Planes" aria-pressed="false">Bit Planes</button>
+        <button class="game-choice" type="button" data-url="https://frontwars.io/" data-title="FrontWars" aria-pressed="false">FrontWars</button>
+        <button class="game-choice" type="button" data-url="https://nintendoboi22.github.io/games/snow-rider/" data-title="Snow Rider" aria-pressed="false">Snow Rider</button>
       </div>
+
       <section class="games-stage" id="game-stage" aria-label="Game player" hidden>
         <div class="games-game-controls">
           <span class="games-fullscreen-status" id="fullscreen-status" role="status" hidden></span>
@@ -37,6 +46,7 @@
             Fullscreen
           </button>
         </div>
+
         <iframe
           class="polytrack-frame games-frame"
           src="about:blank"
@@ -45,11 +55,13 @@
           allowfullscreen
           referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
+
         <p class="polytrack-fallback games-fallback">
           If the game does not load here, it may not support embedding.
         </p>
       </section>
     </main>
+
     <script>
       const gameFrame = document.querySelector(".games-frame");
       const gameStage = document.getElementById("game-stage");
@@ -64,6 +76,7 @@
           gameFrame.title = `${choice.dataset.title} game`;
           fullscreenStatus.hidden = true;
           fullscreenStatus.textContent = "";
+
           document.querySelectorAll(".game-choice").forEach((gameChoice) => {
             gameChoice.setAttribute("aria-pressed", String(gameChoice === choice));
           });
@@ -77,6 +90,7 @@
           } else {
             await gameFrame.requestFullscreen();
           }
+
           fullscreenStatus.hidden = true;
           fullscreenStatus.textContent = "";
         } catch {
