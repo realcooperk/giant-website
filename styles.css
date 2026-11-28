@@ -1628,6 +1628,57 @@ h2 span {
   background: rgba(255, 255, 255, 0.018);
 }
 
+.dashboard-message-settings {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.dashboard-message-settings h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.dashboard-message-field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-message-field input,
+.dashboard-message-field textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  font: inherit;
+}
+
+.dashboard-message-field textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.dashboard-message-field input:focus,
+.dashboard-message-field textarea:focus {
+  border-color: rgba(109, 94, 203, 0.72);
+  outline: none;
+}
+
+.dashboard-message-field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .dashboard-security-heading,
 .dashboard-security-toggle,
 .dashboard-security-field,

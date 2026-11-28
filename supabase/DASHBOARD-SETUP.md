@@ -18,7 +18,7 @@ The dashboard uses a Supabase Edge Function to exchange Discord authorization co
    supabase functions deploy dashboard --project-ref xmgryoegbzyxulimmaed
    ```
 
-4. Configure and expose the bot's security API over HTTPS by following [`DASHBOARD-API-SETUP.md`](https://github.com/realcooperk/Giant/blob/main/DASHBOARD-API-SETUP.md). Set `botApiUrl` in `directory-config.js` to that API's `/security` endpoint. The API validates the signed-in Discord user and Manage Server permission for each request.
+4. Configure and expose the bot's dashboard API over HTTPS by following [`DASHBOARD-API-SETUP.md`](https://github.com/realcooperk/Giant/blob/main/DASHBOARD-API-SETUP.md). Set `botApiUrl` in `directory-config.js` to that API's `/security` endpoint. The API validates the signed-in Discord user and Manage Server permission for each request. The API supports security settings and welcome/goodbye message configuration.
 5. Redeploy this Supabase dashboard function and publish the website changes. The dashboard lists servers where the signed-in user owns the server or has Administrator or Manage Server permission. It checks Giant's membership using the bot token and offers a server-specific invite when Giant is not installed.
 
 Security settings and case actions work only after the bot API is reachable over HTTPS and `botApiUrl` is configured in `directory-config.js`.

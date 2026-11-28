@@ -176,6 +176,101 @@
     return field;
   };
 
+  const makeMessageSettingsFeature = (guild, feature, title) => {
+    const section = document.createElement("section");
+    section.className = "dashboard-message-settings";
+    const heading = document.createElement("div");
+    heading.className = "dashboard-security-heading";
+    const titleElement = document.createElement("h3");
+    titleElement.textContent = title;
+    heading.append(titleElement);
+
+    const form = document.createElement("form");
+    form.className = "dashboard-security-form";
+    const enabledToggle = makeToggle("Enabled", `${feature}Enabled`, false);
+    const enabledInput = enabledToggle.querySelector("input");
+    const channelLabel = document.createElement("label");
+    channelLabel.className = "dashboard-message-field";
+    const channelCaption = document.createElement("span");
+    channelCaption.textContent = "Text channel ID";
+    const channelInput = document.createElement("input");
+    channelInput.type = "text";
+    channelInput.inputMode = "numeric";
+    channelInput.pattern = "[0-9]{5,25}";
+    channelInput.placeholder = "Right-click channel > Copy Channel ID";
+    channelLabel.append(channelCaption, channelInput);
+    enabledInput.addEventListener("change", () => {
+      channelInput.required = enabledInput.checked;
+    });
+
+    const messageLabel = document.createElement("label");
+    messageLabel.className = "dashboard-message-field";
+    const messageCaption = document.createElement("span");
+    messageCaption.textContent = "Message";
+    const messageInput = document.createElement("textarea");
+    messageInput.rows = 3;
+    messageInput.maxLength = 1800;
+    messageInput.required = true;
+    messageInput.placeholder =
+      "Use {user}, {mention}, {server}, and {member_count}.";
+    const placeholderHelp = document.createElement("small");
+    placeholderHelp.textContent =
+      "Placeholders: {user}, {mention}, {server}, {member_count}";
+    messageLabel.append(messageCaption, messageInput, placeholderHelp);
+
+    const status = document.createElement("p");
+    status.className = "dashboard-security-message";
+    status.setAttribute("role", "status");
+    const saveButton = document.createElement("button");
+    saveButton.type = "submit";
+    saveButton.className = "button button-outline dashboard-security-case-action";
+    saveButton.textContent = `Save ${feature} settings`;
+
+    form.append(enabledToggle, channelLabel, messageLabel, status, saveButton);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      saveButton.disabled = true;
+      status.classList.remove("is-error");
+      status.textContent = `Saving ${feature} settings...`;
+      try {
+        const result = await requestBotApi({
+          guildId: guild.id,
+          action: "message_save",
+          feature,
+          settings: {
+            enabled: enabledInput.checked,
+            channelId: channelInput.value.trim(),
+            message: messageInput.value,
+          },
+        });
+        setSettings(result.settings);
+        status.textContent = `${title} saved to Giant.`;
+      } catch (error) {
+        console.error(`Could not save ${feature} settings:`, error);
+        status.textContent =
+          error instanceof Error ? error.message : `Could not save ${feature} settings.`;
+        status.classList.add("is-error");
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    const setSettings = (settings) => {
+      enabledInput.checked = settings.enabled;
+      channelInput.value = settings.channelId;
+      channelInput.required = settings.enabled;
+      messageInput.value = settings.message;
+      status.textContent = settings.enabled
+        ? `${title} are enabled.`
+        : `${title} are disabled.`;
+      status.classList.remove("is-error");
+    };
+
+    section.append(heading, form);
+    return { element: section, setSettings };
+  };
+
   const makeSecuritySettings = (guild) => {
     const settings = {
       ...defaultSecuritySettings,
@@ -183,6 +278,16 @@
     };
     const panel = document.createElement("div");
     panel.className = "dashboard-security-settings";
+    const welcomeSettings = makeMessageSettingsFeature(
+      guild,
+      "welcome",
+      "Welcome messages",
+    );
+    const goodbyeSettings = makeMessageSettingsFeature(
+      guild,
+      "goodbye",
+      "Goodbye messages",
+    );
 
     const heading = document.createElement("div");
     heading.className = "dashboard-security-heading";
@@ -434,7 +539,13 @@
       addCaseAction("Escalate", "escalate"),
     );
     cases.append(casesTitle, casesFilter, caseActions, caseMessage, caseList);
-    panel.append(heading, form, cases);
+    panel.append(
+      heading,
+      form,
+      cases,
+      welcomeSettings.element,
+      goodbyeSettings.element,
+    );
 
     let settingsLoaded = false;
     const setSettings = (serverSettings) => {
@@ -467,6 +578,11 @@
           throw new Error("The Giant security API returned incomplete settings.");
         }
         setSettings(result.settings);
+        if (!result.messages?.welcome || !result.messages?.goodbye) {
+          throw new Error("The Giant API returned incomplete welcome/goodbye settings.");
+        }
+        welcomeSettings.setSettings(result.messages.welcome);
+        goodbyeSettings.setSettings(result.messages.goodbye);
         settingsLoaded = true;
         formMessage.textContent = "Settings loaded from Giant.";
         formMessage.classList.remove("is-error");
@@ -608,8 +724,8 @@
 
     setStatus(
       guilds.length
-        ? "Only servers where you have Administrator or Manage Server permission are shown."
-        : "No servers with Administrator or Manage Server permission were found for this account.",
+        ? "Only servers where you have Manage Server permission (including server owners and administrators) are shown."
+        : "No servers with Manage Server permission were found for this account.",
     );
   };
 
